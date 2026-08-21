@@ -87,4 +87,16 @@ class TipoCasaResource extends Resource
             'edit' => Pages\EditTipoCasa::route('/{record}/edit'),
         ];
     }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user && ! $user->esSuper()) {
+            $query->whereIn('proyecto_id', $user->proyectosAsignados()->pluck('proyectos.id'));
+        }
+
+        return $query;
+    }
 }

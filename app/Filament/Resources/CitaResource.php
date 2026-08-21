@@ -126,4 +126,17 @@ class CitaResource extends Resource
             'edit' => Pages\EditCita::route('/{record}/edit'),
         ];
     }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+{
+    $query = parent::getEloquentQuery();
+    $user = auth()->user();
+
+    if ($user && ! $user->esSuper()) {
+        $proyectoIds = $user->proyectosAsignados()->pluck('proyectos.id');
+        $query->whereHas('casa', fn ($q) => $q->whereIn('proyecto_id', $proyectoIds));
+    }
+
+    return $query;
+}
 }

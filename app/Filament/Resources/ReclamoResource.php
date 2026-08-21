@@ -54,9 +54,6 @@ class ReclamoResource extends Resource
                 ->default('pendiente')
                 ->required(),
 
-            Forms\Components\TextInput::make('ticket')
-                ->maxLength(255),
-
             Forms\Components\DatePicker::make('fecha_reporte')
                 ->native(false),
 
@@ -126,7 +123,7 @@ class ReclamoResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\ReportesRelationManager::class,
         ];
     }
 
@@ -137,5 +134,18 @@ class ReclamoResource extends Resource
             'create' => Pages\CreateReclamo::route('/create'),
             'edit' => Pages\EditReclamo::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user && ! $user->esSuper()) {
+            $proyectoIds = $user->proyectosAsignados()->pluck('proyectos.id');
+            $query->whereHas('casa', fn ($q) => $q->whereIn('proyecto_id', $proyectoIds));
+        }
+
+        return $query;
     }
 }

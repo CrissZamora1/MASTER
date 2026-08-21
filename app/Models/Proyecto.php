@@ -17,4 +17,9 @@ class Proyecto extends Model
     {
         return $this->hasMany(Casa::class);
     }
+
+    public function usuariosAsignados()
+    {
+        return $this->belongsToMany(User::class, 'asignacion_proyectos');
+    }
 }

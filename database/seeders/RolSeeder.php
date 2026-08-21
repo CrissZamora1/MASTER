@@ -10,8 +10,8 @@ class RolSeeder extends Seeder
     public function run(): void
     {
         $roles = [
+            ['codigo' => 'SUPER', 'nombre' => 'Superintendente'],
             ['codigo' => 'ADMIN', 'nombre' => 'Ingeniero'],
-            ['codigo' => 'ASIST', 'nombre' => 'Coordinador'],
             ['codigo' => 'SUP', 'nombre' => 'Supervisor'],
             ['codigo' => 'CONT', 'nombre' => 'Contratista'],
         ];
