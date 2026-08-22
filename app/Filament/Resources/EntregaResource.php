@@ -156,4 +156,19 @@ public static function form(Form $form): Form
 
     return $query;
 }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('create', Entrega::class) ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can('update', $record) ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('delete', $record) ?? false;
+    }
 }

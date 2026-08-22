@@ -90,4 +90,19 @@ class ContratistaResource extends Resource
             'edit' => Pages\EditContratista::route('/{record}/edit'),
         ];
     }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('create', Contratista::class) ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can('update', $record) ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('delete', $record) ?? false;
+    }
 }

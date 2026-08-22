@@ -66,32 +66,37 @@ class User extends Authenticatable
     return $this->belongsToMany(Proyecto::class, 'asignacion_proyectos');
     }
 
-    public function esSuper(): bool
-{
-    return $this->rol?->codigo === 'SUPER';
-}
-
-public function esAdmin(): bool
-{
-    return $this->rol?->codigo === 'ADMIN';
-}
-
-public function esSupervisor(): bool
-{
-    return $this->rol?->codigo === 'SUP';
-}
-
-public function esContratista(): bool
-{
-    return $this->rol?->codigo === 'CONT';
-}
-
-public function tieneAccesoAProyecto(int $proyectoId): bool
-{
-    if ($this->esSuper()) {
-        return true; // SUPER ve todos los proyectos, sin restricción
+        public function esSuper(): bool
+    {
+        return $this->rol?->codigo === 'SUPER';
     }
 
-    return $this->proyectosAsignados()->where('proyectos.id', $proyectoId)->exists();
-}
+    public function esAdmin(): bool
+    {
+        return $this->rol?->codigo === 'ADMIN';
+    }
+
+    public function esSupervisor(): bool
+    {
+        return $this->rol?->codigo === 'SUP';
+    }
+
+    public function esMaster(): bool
+    {
+        return $this->rol?->codigo === 'MASTER';
+    }
+
+    public function esContratista(): bool
+    {
+        return $this->rol?->codigo === 'CONT';
+    }
+
+    public function tieneAccesoAProyecto(int $proyectoId): bool
+    {
+        if ($this->esSuper()) {
+            return true; // SUPER ve todos los proyectos, sin restricción
+        }
+
+        return $this->proyectosAsignados()->where('proyectos.id', $proyectoId)->exists();
+    }
 }

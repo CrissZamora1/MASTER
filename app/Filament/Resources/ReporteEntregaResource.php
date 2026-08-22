@@ -116,4 +116,19 @@ class ReporteEntregaResource extends Resource
             'edit' => Pages\EditReporteEntrega::route('/{record}/edit'),
         ];
     }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('create', ReporteEntrega::class) ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can('update', $record) ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('delete', $record) ?? false;
+    }
 }

@@ -46,9 +46,15 @@ class UserResource extends Resource
 
             Forms\Components\Select::make('rol_id')
                 ->label('Rol')
-                ->relationship('rol', 'nombre')
+                ->relationship('rol', 'nombre', function ($query) {
+                    $user = auth()->user();
+                    if ($user && $user->esMaster()) {
+                        return $query->where('codigo', '!=', 'MASTER'); // MASTER ve todo menos a sí mismo
+                    }
+                    return $query->whereNotIn('codigo', ['MASTER', 'SUPER']); // nadie más ve MASTER ni SUPER
+                })
                 ->required(),
-
+                
             Forms\Components\Toggle::make('activo')
                 ->default(true),
         ]);
@@ -102,5 +108,11 @@ class UserResource extends Resource
             'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->whereDoesntHave('rol', fn ($q) => $q->where('codigo', 'MASTER'));
     }
 }
