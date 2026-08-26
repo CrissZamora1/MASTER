@@ -19,17 +19,32 @@ class ReporteEntregaPolicy
 
     public function create(User $user): bool
     {
-        // Recuerda: confirmaste que el reporte de entrega SÍ lo puede crear el SUPER/ADMIN
-        return in_array($user->rol?->codigo, ['SUPER', 'ADMIN']);
+        return in_array($user->rol?->codigo, ['SUPER', 'ADMIN', 'SUP']);
     }
 
     public function update(User $user, ReporteEntrega $reporteEntrega): bool
     {
+        if (in_array($user->rol?->codigo, ['SUPER', 'ADMIN'])) {
+            return true;
+        }
+
+        if ($user->esSupervisor() && $reporteEntrega->created_at->gt(now()->subHours(2))) {
+            return true;
+        }
+
         return false;
     }
 
     public function delete(User $user, ReporteEntrega $reporteEntrega): bool
     {
+        if (in_array($user->rol?->codigo, ['SUPER', 'ADMIN'])) {
+            return true;
+        }
+
+        if ($user->esSupervisor() && $reporteEntrega->created_at->gt(now()->subHours(2))) {
+            return true;
+        }
+
         return false;
     }
 }

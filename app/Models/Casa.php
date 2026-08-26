@@ -68,4 +68,8 @@ class Casa extends Model
             return;
         }
     }
+    public function reclamos()
+{
+    return $this->hasMany(Reclamo::class);
+}
 }

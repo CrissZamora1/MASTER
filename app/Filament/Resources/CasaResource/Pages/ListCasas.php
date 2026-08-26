@@ -13,6 +13,10 @@ class ListCasas extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('crear-por-rangos')
+                ->label('Crear por rangos')
+                ->icon('heroicon-o-squares-plus')
+                ->url(fn () => static::getResource()::getUrl('crear-por-rangos')),
             Actions\CreateAction::make(),
         ];
     }

@@ -132,7 +132,7 @@ class CitaResource extends Resource
     $query = parent::getEloquentQuery();
     $user = auth()->user();
 
-    if ($user && ! $user->esSuper()) {
+    if ($user && ! $user->esSuper() && ! $user->esMaster()) {
         $proyectoIds = $user->proyectosAsignados()->pluck('proyectos.id');
         $query->whereHas('casa', fn ($q) => $q->whereIn('proyecto_id', $proyectoIds));
     }

@@ -28,6 +28,8 @@ use App\Policies\ReporteReclamoPolicy;
 use App\Policies\TipoCasaPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use App\Models\User;
+use App\Policies\UserPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -36,21 +38,30 @@ class AppServiceProvider extends ServiceProvider
         //
     }
 
-    public function boot(): void
-    {
-        Cita::observe(CitaObserver::class);
-        Entrega::observe(EntregaObserver::class);
+public function boot(): void
+{
+    Gate::before(function ($user, $ability) {
+        if ($user->esMaster()) {
+            return true;
+        }
 
-        Gate::policy(Proyecto::class, ProyectoPolicy::class);
-        Gate::policy(TipoCasa::class, TipoCasaPolicy::class);
-        Gate::policy(Casa::class, CasaPolicy::class);
-        Gate::policy(Cliente::class, ClientePolicy::class);
-        Gate::policy(Garantia::class, GarantiaPolicy::class);
-        Gate::policy(Contratista::class, ContratistaPolicy::class);
-        Gate::policy(Cita::class, CitaPolicy::class);
-        Gate::policy(Entrega::class, EntregaPolicy::class);
-        Gate::policy(Reclamo::class, ReclamoPolicy::class);
-        Gate::policy(ReporteEntrega::class, ReporteEntregaPolicy::class);
-        Gate::policy(ReporteReclamo::class, ReporteReclamoPolicy::class);
+        return null;
+    });
+
+    Cita::observe(CitaObserver::class);
+    Entrega::observe(EntregaObserver::class);
+
+    Gate::policy(Proyecto::class, ProyectoPolicy::class);
+    Gate::policy(TipoCasa::class, TipoCasaPolicy::class);
+    Gate::policy(Casa::class, CasaPolicy::class);
+    Gate::policy(Cliente::class, ClientePolicy::class);
+    Gate::policy(Garantia::class, GarantiaPolicy::class);
+    Gate::policy(Contratista::class, ContratistaPolicy::class);
+    Gate::policy(Cita::class, CitaPolicy::class);
+    Gate::policy(Entrega::class, EntregaPolicy::class);
+    Gate::policy(Reclamo::class, ReclamoPolicy::class);
+    Gate::policy(ReporteEntrega::class, ReporteEntregaPolicy::class);
+    Gate::policy(ReporteReclamo::class, ReporteReclamoPolicy::class);
+    Gate::policy(User::class, UserPolicy::class);
     }
 }

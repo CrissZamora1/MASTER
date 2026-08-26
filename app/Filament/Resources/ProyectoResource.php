@@ -86,7 +86,7 @@ class ProyectoResource extends Resource
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        if ($user && ! $user->esSuper()) {
+        if ($user && ! $user->esSuper() && ! $user->esMaster()) {
             $query->whereIn('id', $user->proyectosAsignados()->pluck('proyectos.id'));
         }
 

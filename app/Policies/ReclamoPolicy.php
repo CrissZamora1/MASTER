@@ -24,11 +24,27 @@ class ReclamoPolicy
 
     public function update(User $user, Reclamo $reclamo): bool
     {
-        return in_array($user->rol?->codigo, ['SUPER', 'ADMIN', 'SUP']);
+        if (! in_array($user->rol?->codigo, ['SUPER', 'ADMIN', 'SUP'])) {
+            return false;
+        }
+
+        if ($user->esSupervisor() && $reclamo->created_at->lt(now()->subHours(2))) {
+            return false;
+        }
+
+        return true;
     }
 
     public function delete(User $user, Reclamo $reclamo): bool
     {
-        return in_array($user->rol?->codigo, ['SUPER', 'ADMIN']);
+        if (in_array($user->rol?->codigo, ['SUPER', 'ADMIN'])) {
+            return true;
+        }
+
+        if ($user->esSupervisor() && $reclamo->created_at->gt(now()->subHours(2))) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -19,80 +19,93 @@ class UserResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-   public static function form(Form $form): Form
-{
-    return $form
-        ->schema([
-            Forms\Components\TextInput::make('name')
-                ->label('Nombre')
-                ->required()
-                ->maxLength(255),
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\TextInput::make('name')
+                    ->label('Nombre')
+                    ->required()
+                    ->maxLength(255),
 
-            Forms\Components\TextInput::make('apellido')
-                ->maxLength(255),
+                Forms\Components\TextInput::make('apellido')
+                    ->maxLength(255),
 
-            Forms\Components\TextInput::make('email')
-                ->email()
-                ->required()
-                ->unique(ignoreRecord: true)
-                ->maxLength(255),
+                Forms\Components\TextInput::make('email')
+                    ->email()
+                    ->required()
+                    ->unique(ignoreRecord: true)
+                    ->maxLength(255),
 
-            Forms\Components\TextInput::make('password')
-                ->password()
-                ->dehydrateStateUsing(fn ($state) => filled($state) ? bcrypt($state) : null)
-                ->dehydrated(fn ($state) => filled($state))
-                ->required(fn (string $operation): bool => $operation === 'create')
-                ->maxLength(255),
+                Forms\Components\TextInput::make('password')
+                    ->password()
+                    ->dehydrateStateUsing(fn ($state) => filled($state) ? bcrypt($state) : null)
+                    ->dehydrated(fn ($state) => filled($state))
+                    ->required(fn (string $operation): bool => $operation === 'create')
+                    ->maxLength(255),
 
-            Forms\Components\Select::make('rol_id')
-                ->label('Rol')
-                ->relationship('rol', 'nombre', function ($query) {
-                    $user = auth()->user();
-                    if ($user && $user->esMaster()) {
-                        return $query->where('codigo', '!=', 'MASTER'); // MASTER ve todo menos a sí mismo
-                    }
-                    return $query->whereNotIn('codigo', ['MASTER', 'SUPER']); // nadie más ve MASTER ni SUPER
-                })
-                ->required(),
-                
-            Forms\Components\Toggle::make('activo')
-                ->default(true),
-        ]);
-}
+                Forms\Components\Select::make('rol_id')
+                    ->label('Rol')
+                    ->relationship('rol', 'nombre', function ($query) {
+                        $user = auth()->user();
+                        if ($user && $user->esMaster()) {
+                            return $query->where('codigo', '!=', 'MASTER');
+                        }
+                        return $query->whereNotIn('codigo', ['MASTER', 'SUPER']);
+                    })
+                    ->required(),
 
-   public static function table(Table $table): Table
-{
-    return $table
-        ->columns([
-            Tables\Columns\TextColumn::make('name')
-                ->label('Nombre')
-                ->searchable()
-                ->sortable(),
+                Forms\Components\Select::make('proyectosAsignados')
+                    ->label('Proyectos asignados')
+                    ->relationship('proyectosAsignados', 'nombre')
+                    ->multiple()
+                    ->preload()
+                    ->searchable()
+                    ->helperText('Selecciona los proyectos a los que este usuario tendrá acceso.'),
 
-            Tables\Columns\TextColumn::make('email')
-                ->searchable(),
+                Forms\Components\Toggle::make('activo')
+                    ->default(true),
+            ]);
+    }
 
-            Tables\Columns\TextColumn::make('rol.nombre')
-                ->label('Rol')
-                ->badge(),
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nombre')
+                    ->searchable()
+                    ->sortable(),
 
-            Tables\Columns\IconColumn::make('activo')
-                ->boolean(),
-        ])
-        ->filters([
-            Tables\Filters\SelectFilter::make('rol_id')
-                ->label('Rol')
-                ->relationship('rol', 'nombre'),
-        ])
-        ->actions([
-            Tables\Actions\EditAction::make(),
-        ])
-        ->bulkActions([
-            Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make(),
-            ]),
-        ]);
-}
+                Tables\Columns\TextColumn::make('email')
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('rol.nombre')
+                    ->label('Rol')
+                    ->badge(),
+
+                Tables\Columns\TextColumn::make('proyectosAsignados.nombre')
+                    ->label('Proyectos')
+                    ->badge()
+                    ->separator(','),
+
+                Tables\Columns\IconColumn::make('activo')
+                    ->boolean(),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('rol_id')
+                    ->label('Rol')
+                    ->relationship('rol', 'nombre'),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
 
     public static function getRelations(): array
     {
@@ -114,5 +127,25 @@ class UserResource extends Resource
     {
         return parent::getEloquentQuery()
             ->whereDoesntHave('rol', fn ($q) => $q->where('codigo', 'MASTER'));
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('viewAny', User::class) ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('create', User::class) ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can('update', $record) ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('delete', $record) ?? false;
     }
 }

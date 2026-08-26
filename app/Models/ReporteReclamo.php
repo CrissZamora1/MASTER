@@ -7,8 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 class ReporteReclamo extends Model
 {
     protected $fillable = [
-        'reclamo_id', 'contratista_id', 'descripcion', 'foto', 'estado',
+        'reclamo_id', 'contratista_id', 'descripcion', 'foto', 'estado', 'creado_por_user_id',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($reporte) {
+            if (auth()->check() && ! $reporte->creado_por_user_id) {
+                $reporte->creado_por_user_id = auth()->id();
+            }
+        });
+    }
 
     public function reclamo()
     {
@@ -18,5 +27,20 @@ class ReporteReclamo extends Model
     public function contratista()
     {
         return $this->belongsTo(Contratista::class);
+    }
+
+    public function creadoPor()
+    {
+        return $this->belongsTo(User::class, 'creado_por_user_id');
+    }
+
+    public function esDeSupervisor(): bool
+    {
+        return $this->creadoPor?->esSupervisor() ?? false;
+    }
+
+    public function esDeContratista(): bool
+    {
+        return $this->creadoPor?->esContratista() ?? false;
     }
 }

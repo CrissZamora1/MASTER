@@ -19,12 +19,12 @@ class ClientePolicy
 
     public function create(User $user): bool
     {
-        return in_array($user->rol?->codigo, ['SUPER', 'ADMIN']);
+        return in_array($user->rol?->codigo, ['SUPER', 'ADMIN', 'SUP']);
     }
 
     public function update(User $user, Cliente $cliente): bool
     {
-        return in_array($user->rol?->codigo, ['SUPER', 'ADMIN']);
+        return in_array($user->rol?->codigo, ['SUPER', 'ADMIN', 'SUP']);
     }
 
     public function delete(User $user, Cliente $cliente): bool

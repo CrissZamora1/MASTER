@@ -119,6 +119,7 @@ class CasaResource extends Resource
                     ->label('Entregable?')
                     ->boolean(),
             ])
+            ->recordUrl(fn ($record) => static::getUrl('view', ['record' => $record]))
             ->filters([
                 Tables\Filters\SelectFilter::make('estado')
                     ->options([
@@ -155,6 +156,8 @@ class CasaResource extends Resource
         return [
             'index' => Pages\ListCasas::route('/'),
             'create' => Pages\CreateCasa::route('/create'),
+            'crear-por-rangos' => Pages\CrearCasasPorRangos::route('/crear-por-rangos'),
+            'view' => Pages\ViewCasa::route('/{record}'),
             'edit' => Pages\EditCasa::route('/{record}/edit'),
         ];
     }
@@ -164,7 +167,7 @@ class CasaResource extends Resource
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        if ($user && ! $user->esSuper()) {
+        if ($user && ! $user->esSuper() && ! $user->esMaster()) {
             $query->whereIn('proyecto_id', $user->proyectosAsignados()->pluck('proyectos.id'));
         }
 

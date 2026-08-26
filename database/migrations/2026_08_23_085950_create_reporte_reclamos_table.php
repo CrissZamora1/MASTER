@@ -1,0 +1,27 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('reporte_reclamos', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('reclamo_id')->constrained('reclamos')->cascadeOnDelete();
+            $table->foreignId('creado_por_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('contratista_id')->nullable()->constrained('contratistas')->nullOnDelete();
+            $table->text('descripcion')->nullable();
+            $table->string('foto')->nullable();
+            $table->string('estado')->default('pendiente');
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('reporte_reclamos');
+    }
+};
