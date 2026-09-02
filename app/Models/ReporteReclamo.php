@@ -7,7 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 class ReporteReclamo extends Model
 {
     protected $fillable = [
-        'reclamo_id', 'contratista_id', 'descripcion', 'foto', 'estado', 'creado_por_user_id',
+        'reclamo_id',
+        'creado_por_user_id',
+        'descripcion',
+        'revisado',         // <--- Agrégalo aquí
+        'fecha_revision',   // <--- Agrégalo aquí
+        // ... los demás campos que ya tengas
+    ];
+    protected $casts = [
+        'revisado' => 'boolean',
+        'fecha_revision' => 'datetime',
     ];
 
     protected static function booted()

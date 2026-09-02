@@ -4,15 +4,25 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ReclamoResource\Pages;
 use App\Filament\Resources\ReclamoResource\RelationManagers;
-use App\Models\Casa;
 use App\Models\Reclamo;
+use App\Models\Casa;
+use App\Models\Garantia;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
+use Illuminate\Support\Carbon;
 
 class ReclamoResource extends Resource
 {
@@ -24,60 +34,87 @@ class ReclamoResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('casa_id')
-                    ->label('Casa')
-                    ->options(fn () => Casa::where('estado', 'entregado')
-                        ->with(['proyecto', 'tipoCasa'])
-                        ->get()
-                        ->mapWithKeys(fn ($casa) => [
-                            $casa->id => "Casa {$casa->numero_casa} - {$casa->tipoCasa?->nombre} - {$casa->proyecto?->nombre}",
-                        ]))
-                    ->required()
-                    ->searchable()
-                    ->preload(),
+                Section::make('Información del Reclamo')
+                    ->columns(2)
+                    ->schema([
+                        Select::make('casa_id')
+                            ->relationship('casa', 'n_casa')
+                            ->required()
+                            ->searchable()
+                            ->live()
+                            ->afterStateUpdated(function (Set $set, $state) {
+                                $casa = Casa::find($state);
+                                $ultimaEntrega = $casa?->ultimaEntrega;
+                                if ($ultimaEntrega) {
+                                    $fecha = Carbon::parse($ultimaEntrega->fecha_hora_entrega);
+                                    $set('fecha_inicio', $fecha->format('Y-m-d'));
+                                }
+                            }),
 
-                Forms\Components\Select::make('garantia_id')
-                    ->label('Garantía')
-                    ->relationship('garantia', 'nombre')
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->live(),
+                        Select::make('garantia_id')
+                            ->relationship('garantia', 'nombre')
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                $fechaInicio = $get('fecha_inicio');
+                                $garantia = Garantia::find($state);
+                                if ($fechaInicio && $garantia) {
+                                    $vence = Carbon::parse($fechaInicio)->addMonths((int)$garantia->meses_duracion);
+                                    $set('fecha_fin', $vence->format('Y-m-d'));
+                                    $estado = now()->startOfDay()->gt($vence) ? 'fuera_de_garantia' : 'pendiente';
+                                    $set('estado', $estado);
+                                }
+                            }),
 
-                Forms\Components\DatePicker::make('fecha_inicio')
-                    ->label('Fecha inicio (entrega)')
-                    ->native(false)
-                    ->disabled()
-                    ->dehydrated()
-                    ->helperText('Se calcula automáticamente según la fecha de entrega de la casa.'),
+                        DatePicker::make('fecha_inicio')
+                            ->label('Fecha inicio (entrega)')
+                            ->native(false)
+                            ->displayFormat('d/m/Y')
+                            ->readonly(),
 
-                Forms\Components\DatePicker::make('fecha_fin')
-                    ->label('Vence')
-                    ->native(false)
-                    ->disabled()
-                    ->dehydrated()
-                    ->helperText('Se calcula automáticamente: fecha de entrega + duración de la garantía.'),
+                        DatePicker::make('fecha_fin')
+                            ->label('Vence')
+                            ->native(false)
+                            ->displayFormat('d/m/Y')
+                            ->readonly(),
 
-                Forms\Components\Select::make('estado')
-                    ->options([
-                        'pendiente' => 'Pendiente',
-                        'garantia_aceptada' => 'Garantía aceptada',
-                        'fuera_de_garantia' => 'Fuera de garantía',
-                    ])
-                    ->disabled()
-                    ->dehydrated()
-                    ->helperText('Se calcula automáticamente según la fecha de vencimiento.'),
+                        Select::make('estado')
+                            ->options([
+                                'pendiente' => 'Pendiente (En Garantía)',
+                                'garantia_aceptada' => 'Garantía Aceptada (Manual)',
+                                'fuera_de_garantia' => 'Fuera de Garantía',
+                                'finalizado' => 'Finalizado',
+                            ])
+                            ->native(false)
+                            ->disabled()
+                            ->dehydrated(),
 
-                Forms\Components\Toggle::make('validado_manualmente')
-                    ->label('Marcar garantía como válida (excepción manual)')
-                    ->helperText('Fuerza el estado a "Garantía aceptada" sin importar la fecha de vencimiento.')
-                    ->visible(fn () => auth()->user()?->esMaster() || auth()->user()?->esSuper()),
+                        Toggle::make('validado_manualmente')
+                            ->label('Marcar garantía como válida (excepción manual)')
+                            ->live()
+                            ->afterStateUpdated(function (Set $set, $state) {
+                                if ($state) $set('estado', 'garantia_aceptada');
+                            }),
+                    ]),
 
-                Forms\Components\DatePicker::make('fecha_reporte')
-                    ->native(false),
+                Section::make('Asignación de Ticket e Informe Inicial')
+                    ->columns(2)
+                    ->schema([
+                        Select::make('contratista_id')
+                            ->label('Asignar Contratista')
+                            // Filtramos usuarios que tengan rol de contratista
+                            ->options(User::whereHas('roles', fn($q) => $q->where('name', 'CONT'))->pluck('name', 'id'))
+                            ->required(),
 
-                Forms\Components\Textarea::make('descripcion')
-                    ->columnSpanFull(),
+                        TextInput::make('ticket')
+                            ->default(fn () => 'TK-' . strtoupper(uniqid()))
+                            ->readonly(),
+
+                        Textarea::make('descripcion')
+                            ->label('Descripción del problema')
+                            ->required()
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 
@@ -85,51 +122,20 @@ class ReclamoResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('casa_label')
-                    ->label('Casa')
-                    ->getStateUsing(fn ($record) => "Casa {$record->casa?->numero_casa} - {$record->casa?->tipoCasa?->nombre} - {$record->casa?->proyecto?->nombre}")
-                    ->searchable(query: function (Builder $query, string $search): Builder {
-                        return $query->whereHas('casa', fn ($q) => $q->where('numero_casa', 'like', "%{$search}%"));
+                Tables\Columns\TextColumn::make('casa.n_casa')->label('Casa')->sortable(),
+                Tables\Columns\TextColumn::make('ticket')->label('Ticket')->searchable(),
+                Tables\Columns\TextColumn::make('estado')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'pendiente' => 'warning',
+                        'garantia_aceptada' => 'success',
+                        'fuera_de_garantia' => 'danger',
+                        'finalizado' => 'gray',
                     }),
-
-                Tables\Columns\TextColumn::make('cliente_nombre')
-                    ->label('Cliente')
-                    ->getStateUsing(fn ($record) => $record->cliente
-                        ? $record->cliente->nombre . ' ' . $record->cliente->apellido
-                        : 'Sin cliente'),
-
-                Tables\Columns\TextColumn::make('garantia.nombre')
-                    ->label('Garantía')
-                    ->searchable(),
-
-                Tables\Columns\TextColumn::make('ticket')
-                    ->searchable(),
-
-                Tables\Columns\BadgeColumn::make('estado')
-                    ->colors([
-                        'warning' => 'pendiente',
-                        'success' => 'garantia_aceptada',
-                        'danger' => 'fuera_de_garantia',
-                    ])
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'pendiente' => 'Pendiente',
-                        'garantia_aceptada' => 'Garantía aceptada',
-                        'fuera_de_garantia' => 'Fuera de garantía',
-                        default => $state,
-                    }),
-
-                Tables\Columns\TextColumn::make('fecha_fin')
-                    ->label('Vence')
-                    ->date('d/m/Y')
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('fecha_fin')->label('Vence')->date('d/m/Y'),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('estado')
-                    ->options([
-                        'pendiente' => 'Pendiente',
-                        'garantia_aceptada' => 'Garantía aceptada',
-                        'fuera_de_garantia' => 'Fuera de garantía',
-                    ]),
+                //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -155,33 +161,5 @@ class ReclamoResource extends Resource
             'create' => Pages\CreateReclamo::route('/create'),
             'edit' => Pages\EditReclamo::route('/{record}/edit'),
         ];
-    }
-
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
-    {
-        $query = parent::getEloquentQuery();
-        $user = auth()->user();
-
-        if ($user && ! $user->esSuper() && ! $user->esMaster()) {
-            $proyectoIds = $user->proyectosAsignados()->pluck('proyectos.id');
-            $query->whereHas('casa', fn ($q) => $q->whereIn('proyecto_id', $proyectoIds));
-        }
-
-        return $query;
-    }
-
-    public static function canCreate(): bool
-    {
-        return auth()->user()?->can('create', Reclamo::class) ?? false;
-    }
-
-    public static function canEdit($record): bool
-    {
-        return auth()->user()?->can('update', $record) ?? false;
-    }
-
-    public static function canDelete($record): bool
-    {
-        return auth()->user()?->can('delete', $record) ?? false;
     }
 }

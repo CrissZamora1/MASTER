@@ -4,7 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property Carbon|null $fecha_inicio
+ * @property Carbon|null $fecha_fin
+ * @property Carbon|null $fecha_reporte
+ */
 class Reclamo extends Model
 {
     protected $fillable = [
@@ -22,28 +28,29 @@ class Reclamo extends Model
     protected static function booted(): void
     {
         static::saving(function (Reclamo $reclamo) {
-            // Si tiene validación manual (solo MASTER/SUPER pueden marcarla), respeta eso
+            // Si tiene validación manual, respeta eso
             if ($reclamo->validado_manualmente) {
                 $reclamo->estado = 'garantia_aceptada';
                 return;
             }
 
-            // fecha_inicio = fecha de la última entrega, solo si la casa fue entregada
+            // fecha_inicio = fecha de la última entrega
             $ultimaEntrega = $reclamo->casa?->ultimaEntrega;
 
             if ($ultimaEntrega && in_array($ultimaEntrega->resultado, ['entregada', 'entregada_con_reclamos'])) {
-               $reclamo->fecha_inicio = $ultimaEntrega->fecha_hora_entrega->startOfDay()->toDateString();
+                /** @var Carbon $fechaEntrega */
+                $fechaEntrega = $ultimaEntrega->fecha_hora_entrega;
+                $reclamo->fecha_inicio = $fechaEntrega->startOfDay();
             }
 
             // fecha_fin = fecha_inicio + meses de la garantía
             if ($reclamo->fecha_inicio && $reclamo->garantia) {
-                $reclamo->fecha_fin = \Carbon\Carbon::parse($reclamo->fecha_inicio)
-                ->addMonths($reclamo->garantia->meses_duracion)
-                ->toDateString();
+                $meses = (int) $reclamo->garantia->meses_duracion;
+                $reclamo->fecha_fin = Carbon::parse($reclamo->fecha_inicio)->addMonths($meses)->startOfDay();
             }
 
             // Estado automático según vencimiento
-            if ($reclamo->fecha_fin && now()->toDateString() > $reclamo->fecha_fin) {
+            if ($reclamo->fecha_fin instanceof Carbon && now()->startOfDay()->gt($reclamo->fecha_fin)) {
                 $reclamo->estado = 'fuera_de_garantia';
             } elseif ($reclamo->fecha_fin) {
                 $reclamo->estado = 'pendiente';
@@ -61,7 +68,7 @@ class Reclamo extends Model
         return $this->belongsTo(Garantia::class);
     }
 
-        public function reportes()
+    public function reportes()
     {
         return $this->hasMany(ReporteReclamo::class);
     }
