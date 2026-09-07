@@ -63,11 +63,11 @@ class User extends Authenticatable
     }
 
     public function proyectosAsignados()
-    {   
-    return $this->belongsToMany(Proyecto::class, 'asignacion_proyectos');
+    {
+        return $this->belongsToMany(Proyecto::class, 'asignacion_proyectos');
     }
 
-        public function esSuper(): bool
+    public function esSuper(): bool
     {
         return $this->rol?->codigo === 'SUPER';
     }
@@ -99,5 +99,10 @@ class User extends Authenticatable
         }
 
         return $this->proyectosAsignados()->where('proyectos.id', $proyectoId)->exists();
+    }
+
+    public function contratista()
+    {
+        return $this->hasOne(Contratista::class);
     }
 }

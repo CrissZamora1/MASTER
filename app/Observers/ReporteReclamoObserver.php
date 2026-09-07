@@ -1,36 +1,36 @@
 <?php
+
 namespace App\Observers;
 
 use App\Models\ReporteReclamo;
-use App\Models\Reclamo;
 
 class ReporteReclamoObserver
 {
-    public function saved(ReporteReclamo $reporteReclamo): void
+    public function saved(ReporteReclamo $reporte): void
     {
-        // Obtenemos el reclamo padre
-        $reclamo = $reporteReclamo->reclamo;
+        $ticket = $reporte->reclamoGarantia;
 
-        if (!$reclamo) return;
+        if (! $ticket) {
+            return;
+        }
 
-        // Buscamos todos los reportes de este reclamo
-        $reportes = $reclamo->reportes;
+        $reportes = $ticket->reportes()->with('creadoPor')->get();
 
-        // Lógica: ¿Hay al menos uno de Supervisor FINALIZADO?
-        $tieneSupFinalizado = $reportes->contains(fn ($r) => 
-            $r->esDeSupervisor() && $r->estado === 'finalizado'
-        );
+        $contratistaFinalizado = $reportes->first(fn ($r) => $r->esDeContratista() && $r->estado === 'finalizado');
+        $supervisorFinalizado = $reportes->first(fn ($r) => $r->esDeSupervisor() && $r->estado === 'finalizado');
 
-        // Lógica: ¿Hay al menos uno de Contratista FINALIZADO?
-        $tieneContFinalizado = $reportes->contains(fn ($r) => 
-            $r->esDeContratista() && $r->estado === 'finalizado'
-        );
+        if ($contratistaFinalizado && $supervisorFinalizado) {
+            if ($ticket->estado_reparacion !== 'finalizada') {
+                $ticket->update(['estado_reparacion' => 'finalizada']);
+            }
+            return;
+        }
 
-        // Si AMBOS terminaron su parte, cerramos el Reclamo automáticamente
-        if ($tieneSupFinalizado && $tieneContFinalizado) {
-            $reclamo->update([
-                'estado' => 'finalizado' // Asegúrate que este estado exista en tu DB
-            ]);
+        // Si el Contratista ya reportó algo (aunque no esté finalizado), ya "empezó"
+        $hayReporteContratista = $reportes->first(fn ($r) => $r->esDeContratista());
+
+        if ($hayReporteContratista && $ticket->estado_reparacion === 'pendiente') {
+            $ticket->update(['estado_reparacion' => 'en_proceso']);
         }
     }
 }

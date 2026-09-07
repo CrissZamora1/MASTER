@@ -9,7 +9,15 @@ class ReclamoGarantia extends Model
     protected $table = 'reclamo_garantia';
 
     protected $fillable = [
-        'reclamo_id', 'garantia_id', 'fecha_inicio', 'fecha_fin', 'estado', 'validado_manualmente',
+        'reclamo_id',
+        'garantia_id',
+        'fecha_inicio',
+        'fecha_fin',
+        'estado',
+        'validado_manualmente',
+        'contratista_id',
+        'supervisor_id',
+        'estado_reparacion',
     ];
 
     protected $casts = [
@@ -54,5 +62,25 @@ class ReclamoGarantia extends Model
     public function garantia()
     {
         return $this->belongsTo(Garantia::class);
+    }
+
+    public function contratista()
+    {
+        return $this->belongsTo(Contratista::class);
+    }
+
+    public function supervisor()
+    {
+        return $this->belongsTo(User::class, 'supervisor_id');
+    }
+
+    public function reportes()
+    {
+        return $this->hasMany(ReporteReclamo::class);
+    }
+
+    public function fotos()
+    {
+        return $this->hasMany(ReclamoGarantiaFoto::class);
     }
 }

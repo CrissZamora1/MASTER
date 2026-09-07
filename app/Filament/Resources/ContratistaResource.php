@@ -23,6 +23,11 @@ class ContratistaResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Select::make('user_id')
+                    ->label('Usuario para iniciar sesión')
+                    ->options(fn() => \App\Models\User::whereHas('rol', fn($q) => $q->where('codigo', 'CONT'))->pluck('name', 'id'))
+                    ->searchable(),
+                    
                 Forms\Components\TextInput::make('nombre')
                     ->required()
                     ->maxLength(255),
@@ -45,34 +50,34 @@ class ContratistaResource extends Resource
 
     public static function table(Table $table): Table
     {
-    return $table
-        ->columns([
-            Tables\Columns\TextColumn::make('nombre')
-                ->searchable()
-                ->sortable(),
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('nombre')
+                    ->searchable()
+                    ->sortable(),
 
-            Tables\Columns\TextColumn::make('especialidad')
-                ->searchable(),
+                Tables\Columns\TextColumn::make('especialidad')
+                    ->searchable(),
 
-            Tables\Columns\TextColumn::make('telefono'),
+                Tables\Columns\TextColumn::make('telefono'),
 
-            Tables\Columns\TextColumn::make('email')
-                ->searchable(),
+                Tables\Columns\TextColumn::make('email')
+                    ->searchable(),
 
-            Tables\Columns\IconColumn::make('activo')
-                ->boolean(),
-        ])
-        ->filters([
-            Tables\Filters\TernaryFilter::make('activo'),
-        ])
-        ->actions([
-            Tables\Actions\EditAction::make(),
-        ])
-        ->bulkActions([
-            Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make(),
-            ]),
-        ]);
+                Tables\Columns\IconColumn::make('activo')
+                    ->boolean(),
+            ])
+            ->filters([
+                Tables\Filters\TernaryFilter::make('activo'),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
     }
 
     public static function getRelations(): array

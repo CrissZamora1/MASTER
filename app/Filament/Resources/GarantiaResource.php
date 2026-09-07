@@ -21,47 +21,47 @@ class GarantiaResource extends Resource
 
     public static function form(Form $form): Form
     {
-    return $form
-        ->schema([
-            Forms\Components\TextInput::make('nombre')
-                ->required()
-                ->maxLength(255),
+        return $form
+            ->schema([
+                Forms\Components\TextInput::make('nombre')
+                    ->required()
+                    ->maxLength(255),
 
-            Forms\Components\TextInput::make('meses_duracion')
-                ->label('Meses de duración')
-                ->numeric()
-                ->required()
-                ->suffix('meses'),
+                Forms\Components\TextInput::make('meses_duracion')
+                    ->label('Meses de duración')
+                    ->numeric()
+                    ->required()
+                    ->suffix('meses'),
 
-            Forms\Components\Textarea::make('descripcion')
-                ->columnSpanFull(),
-        ]);
+                Forms\Components\Textarea::make('descripcion')
+                    ->columnSpanFull(),
+            ]);
     }
 
     public static function table(Table $table): Table
     {
-    return $table
-        ->columns([
-            Tables\Columns\TextColumn::make('nombre')
-                ->searchable()
-                ->sortable(),
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('nombre')
+                    ->searchable()
+                    ->sortable(),
 
-            Tables\Columns\TextColumn::make('meses_duracion')
-                ->label('Duración')
-                ->suffix(' meses')
-                ->sortable(),
-        ])
-        ->filters([
-            //
-        ])
-        ->actions([
-            Tables\Actions\EditAction::make(),
-        ])
-        ->bulkActions([
-            Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make(),
-            ]),
-        ]);
+                Tables\Columns\TextColumn::make('meses_duracion')
+                    ->label('Duración')
+                    ->suffix(' meses')
+                    ->sortable(),
+            ])
+            ->filters([
+                //
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
     }
 
     public static function getRelations(): array

@@ -7,16 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 class ReporteReclamo extends Model
 {
     protected $fillable = [
-        'reclamo_id',
-        'creado_por_user_id',
+        'reclamo_garantia_id',
         'descripcion',
-        'revisado',         // <--- Agrégalo aquí
-        'fecha_revision',   // <--- Agrégalo aquí
-        // ... los demás campos que ya tengas
+        'estado',
+        'creado_por_user_id',
+        'revisado',
+        'revisado_por',
+        'revisado_at',
     ];
+
     protected $casts = [
         'revisado' => 'boolean',
-        'fecha_revision' => 'datetime',
+        'revisado_at' => 'datetime',
     ];
 
     protected static function booted()
@@ -28,19 +30,24 @@ class ReporteReclamo extends Model
         });
     }
 
-    public function reclamo()
+    public function reclamoGarantia()
     {
-        return $this->belongsTo(Reclamo::class);
-    }
-
-    public function contratista()
-    {
-        return $this->belongsTo(Contratista::class);
+        return $this->belongsTo(ReclamoGarantia::class);
     }
 
     public function creadoPor()
     {
         return $this->belongsTo(User::class, 'creado_por_user_id');
+    }
+
+    public function revisadoPor()
+    {
+        return $this->belongsTo(User::class, 'revisado_por');
+    }
+
+    public function fotos()
+    {
+        return $this->hasMany(ReporteReclamoFoto::class);
     }
 
     public function esDeSupervisor(): bool
@@ -51,5 +58,14 @@ class ReporteReclamo extends Model
     public function esDeContratista(): bool
     {
         return $this->creadoPor?->esContratista() ?? false;
+    }
+
+    public function marcarRevisado(): void
+    {
+        $this->update([
+            'revisado' => true,
+            'revisado_por' => auth()->id(),
+            'revisado_at' => now(),
+        ]);
     }
 }

@@ -31,7 +31,7 @@ class ReclamoResource extends Resource
                     ->preload(),
 
                 Forms\Components\TextInput::make('ticket')
-                    ->default(fn () => 'TK-'.strtoupper(uniqid()))
+                    ->default(fn() => 'TK-' . strtoupper(uniqid()))
                     ->readonly(),
 
                 Forms\Components\DatePicker::make('fecha_reporte')
@@ -57,11 +57,11 @@ class ReclamoResource extends Resource
 
                 Tables\Columns\TextColumn::make('garantias_lista')
                     ->label('Garantías')
-                    ->getStateUsing(fn ($record) => $record->garantias->pluck('garantia.nombre')->filter()->join(', ') ?: 'Sin garantías'),
+                    ->getStateUsing(fn($record) => $record->garantias->pluck('garantia.nombre')->filter()->join(', ') ?: 'Sin garantías'),
 
                 Tables\Columns\TextColumn::make('proximo_vencimiento')
                     ->label('Próximo vence')
-                    ->getStateUsing(fn ($record) => optional($record->garantias->sortBy('fecha_fin')->first())->fecha_fin?->format('d/m/Y') ?? '—'),
+                    ->getStateUsing(fn($record) => optional($record->garantias->sortBy('fecha_fin')->first())->fecha_fin?->format('d/m/Y') ?? '—'),
 
                 Tables\Columns\TextColumn::make('fecha_reporte')
                     ->label('Reportado')
@@ -78,7 +78,7 @@ class ReclamoResource extends Resource
                     ->query(function (Builder $query, array $data) {
                         return $query->when(
                             $data['value'] ?? null,
-                            fn (Builder $q, $value) => $q->whereHas('garantias', fn ($q2) => $q2->where('estado', $value))
+                            fn(Builder $q, $value) => $q->whereHas('garantias', fn($q2) => $q2->where('estado', $value))
                         );
                     }),
             ])
@@ -96,7 +96,6 @@ class ReclamoResource extends Resource
     {
         return [
             RelationManagers\GarantiasRelationManager::class,
-            RelationManagers\ReportesRelationManager::class,
         ];
     }
 

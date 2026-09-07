@@ -32,6 +32,7 @@ use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -73,5 +74,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ReporteEntrega::class, ReporteEntregaPolicy::class);
         Gate::policy(ReporteReclamo::class, ReporteReclamoPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
+        ReporteReclamo::observe(ReporteReclamoObserver::class);
     }
 }
