@@ -24,16 +24,15 @@ class CitaPolicy
 
     public function update(User $user, Cita $cita): bool
     {
-        if (! in_array($user->rol?->codigo, ['SUPER', 'ADMIN', 'SUP'])) {
-            return false;
+        if ($user->esMaster() || $user->esSuper()) {
+            return true;
         }
 
-        // El bloqueo de 2 horas solo aplica a Supervisores
-        if ($user->esSupervisor() && $cita->bloqueada) {
-            return false;
+        if ($user->esAdmin() || $user->esSupervisor()) {
+            return ! $cita->bloqueada;
         }
 
-        return true;
+        return false;
     }
 
     public function delete(User $user, Cita $cita): bool

@@ -35,12 +35,13 @@ class ViewCasa extends ViewRecord
                         TextEntry::make('anexo')->label('Anexo'),
                         TextEntry::make('estado')
                             ->badge()
-                            ->formatStateUsing(fn (string $state): string => match ($state) {
+                            ->formatStateUsing(fn(string $state): string => match ($state) {
                                 'disponible' => 'Disponible',
                                 'no_disponible' => 'No disponible',
                                 'programada' => 'Programada',
                                 'reprogramada' => 'Reprogramada',
                                 'entregado' => 'Entregado',
+                                'no_asistio' => 'No asistió',
                                 default => $state,
                             }),
                     ]),
@@ -53,7 +54,7 @@ class ViewCasa extends ViewRecord
                         TextEntry::make('ultimaEntrega.cliente.email')->label('Correo'),
                     ])
                     ->columns(4)
-                    ->visible(fn ($record) => $record->ultimaEntrega?->cliente !== null),
+                    ->visible(fn($record) => $record->ultimaEntrega?->cliente !== null),
 
                 Section::make('Cronología de Citas')
                     ->schema([
@@ -86,12 +87,36 @@ class ViewCasa extends ViewRecord
                         RepeatableEntry::make('reclamos')
                             ->label('')
                             ->schema([
-                                TextEntry::make('garantia.nombre')->label('Garantía'),
-                                TextEntry::make('fecha_fin')->label('Vence')->date('d/m/Y'),
-                                TextEntry::make('estado')->badge(),
+                                TextEntry::make('fecha_reporte')->label('Reportado')->date('d/m/Y'),
                                 TextEntry::make('descripcion')->label('Descripción')->columnSpanFull(),
+
+                                RepeatableEntry::make('garantias')
+                                    ->label('Tickets')
+                                    ->schema([
+                                        TextEntry::make('garantia.nombre')->label('Garantía'),
+                                        TextEntry::make('fecha_fin')->label('Vence')->date('d/m/Y'),
+                                        TextEntry::make('estado')
+                                            ->badge()
+                                            ->formatStateUsing(fn(string $state): string => match ($state) {
+                                                'pendiente' => 'En garantía',
+                                                'garantia_aceptada' => 'Garantía aceptada',
+                                                'fuera_de_garantia' => 'Fuera de garantía',
+                                                default => $state,
+                                            }),
+                                        TextEntry::make('estado_reparacion')
+                                            ->label('Reparación')
+                                            ->badge()
+                                            ->formatStateUsing(fn(string $state): string => match ($state) {
+                                                'pendiente' => 'No iniciado',
+                                                'en_proceso' => 'En proceso',
+                                                'finalizada' => 'Finalizada',
+                                                default => $state,
+                                            }),
+                                    ])
+                                    ->columns(4)
+                                    ->columnSpanFull(),
                             ])
-                            ->columns(3),
+                            ->columns(2),
                     ])
                     ->collapsible(),
             ]);

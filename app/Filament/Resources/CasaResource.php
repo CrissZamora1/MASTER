@@ -30,11 +30,11 @@ class CasaResource extends Resource
                     ->searchable()
                     ->preload()
                     ->live()
-                    ->afterStateUpdated(fn (Forms\Set $set) => $set('tipo_casa_id', null)),
+                    ->afterStateUpdated(fn(Forms\Set $set) => $set('tipo_casa_id', null)),
 
                 Forms\Components\Select::make('tipo_casa_id')
                     ->label('Tipo de Casa')
-                    ->options(fn (Forms\Get $get) => TipoCasa::where('proyecto_id', $get('proyecto_id'))->pluck('nombre', 'id'))
+                    ->options(fn(Forms\Get $get) => TipoCasa::where('proyecto_id', $get('proyecto_id'))->pluck('nombre', 'id'))
                     ->required()
                     ->searchable()
                     ->preload(),
@@ -61,20 +61,20 @@ class CasaResource extends Resource
                     ])
                     ->default('no_disponible')
                     ->required()
-                    ->visible(fn (string $operation): bool => $operation === 'create')
+                    ->visible(fn(string $operation): bool => $operation === 'create')
                     ->helperText('Una vez que la casa tenga citas o entregas, el estado se actualizará automáticamente.'),
 
                 Forms\Components\Placeholder::make('estado_actual')
-                    ->label('Estado actual')
-                    ->content(fn ($record) => $record ? match ($record->estado) {
+                    ->content(fn($record) => $record ? match ($record->estado) {
                         'disponible' => 'Disponible',
                         'no_disponible' => 'No disponible',
                         'programada' => 'Programada',
                         'reprogramada' => 'Reprogramada',
                         'entregado' => 'Entregado',
+                        'no_asistio' => 'No asistió',
                         default => $record->estado,
                     } : '-')
-                    ->visible(fn (string $operation): bool => $operation === 'edit'),
+                    ->visible(fn(string $operation): bool => $operation === 'edit'),
             ]);
     }
 
@@ -103,23 +103,25 @@ class CasaResource extends Resource
                 Tables\Columns\BadgeColumn::make('estado')
                     ->colors([
                         'success' => 'disponible',
-                        'danger' => 'no_disponible',
-                        'warning' => fn ($state) => in_array($state, ['programada', 'reprogramada']),
+                        'danger' => fn($state) => in_array($state, ['no_disponible', 'no_asistio']),
+                        'warning' => fn($state) => in_array($state, ['programada', 'reprogramada']),
                         'primary' => 'entregado',
                     ])
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         'disponible' => 'Disponible',
                         'no_disponible' => 'No disponible',
                         'programada' => 'Programada',
                         'reprogramada' => 'Reprogramada',
                         'entregado' => 'Entregado',
+                        'no_asistio' => 'No asistió',
                         default => $state,
                     }),
+
                 Tables\Columns\IconColumn::make('acabados')
                     ->label('Entregable?')
                     ->boolean(),
             ])
-            ->recordUrl(fn ($record) => static::getUrl('view', ['record' => $record]))
+            ->recordUrl(fn($record) => static::getUrl('view', ['record' => $record]))
             ->filters([
                 Tables\Filters\SelectFilter::make('estado')
                     ->options([
@@ -128,6 +130,7 @@ class CasaResource extends Resource
                         'programada' => 'Programada',
                         'reprogramada' => 'Reprogramada',
                         'entregado' => 'Entregado',
+                        'no_asistio' => 'No asistió',
                     ]),
 
                 Tables\Filters\SelectFilter::make('proyecto_id')
@@ -135,6 +138,14 @@ class CasaResource extends Resource
                     ->relationship('proyecto', 'nombre'),
             ])
             ->actions([
+                Tables\Actions\Action::make('marcar_disponible')
+                    ->label('Marcar disponible')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn($record) => $record->estado !== 'disponible')
+                    ->requiresConfirmation()
+                    ->action(fn($record) => $record->update(['estado' => 'disponible'])),
+
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
@@ -176,16 +187,16 @@ class CasaResource extends Resource
 
     public static function canCreate(): bool
     {
-            return auth()->user()?->can('create', Casa::class) ?? false;
+        return auth()->user()?->can('create', Casa::class) ?? false;
     }
 
     public static function canEdit($record): bool
     {
-            return auth()->user()?->can('update', $record) ?? false;
+        return auth()->user()?->can('update', $record) ?? false;
     }
 
     public static function canDelete($record): bool
     {
-            return auth()->user()?->can('delete', $record) ?? false;
+        return auth()->user()?->can('delete', $record) ?? false;
     }
 }

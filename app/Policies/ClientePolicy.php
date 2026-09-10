@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\Cliente;
+use App\Models\Cita;
 use App\Models\User;
 
 class ClientePolicy
@@ -12,23 +12,23 @@ class ClientePolicy
         return true;
     }
 
-    public function view(User $user, Cliente $cliente): bool
+    public function view(User $user, Cita $cita): bool
     {
         return true;
     }
 
     public function create(User $user): bool
     {
-        return in_array($user->rol?->codigo, ['SUPER', 'ADMIN', 'SUP']);
+        return $user->esMaster() || $user->esSuper() || $user->esAdmin() || $user->esSupervisor();
     }
 
-    public function update(User $user, Cliente $cliente): bool
+    public function update(User $user, Cita $cita): bool
     {
-        return in_array($user->rol?->codigo, ['SUPER', 'ADMIN', 'SUP']);
+        return false;
     }
 
-    public function delete(User $user, Cliente $cliente): bool
+    public function delete(User $user, Cita $cita): bool
     {
-        return in_array($user->rol?->codigo, ['SUPER', 'ADMIN']);
+        return $user->esMaster() || $user->esSuper();
     }
 }

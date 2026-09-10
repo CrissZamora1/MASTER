@@ -16,8 +16,13 @@ class Casa extends Model
     }
 
     protected $fillable = [
-        'proyecto_id', 'tipo_casa_id', 'numero_casa',
-        'cluster', 'anexo', 'acabados', 'estado',
+        'proyecto_id',
+        'tipo_casa_id',
+        'numero_casa',
+        'cluster',
+        'anexo',
+        'acabados',
+        'estado',
     ];
 
     public function proyecto()
@@ -54,10 +59,19 @@ class Casa extends Model
     {
         $ultimaEntrega = $this->ultimaEntrega;
 
-        if ($ultimaEntrega && in_array($ultimaEntrega->resultado, ['entregada', 'entregada_con_reclamos'])) {
-            $this->estado = 'entregado';
-            $this->save();
-            return;
+        if ($ultimaEntrega) {
+            if (in_array($ultimaEntrega->resultado, ['entregada', 'entregada_con_reclamos'])) {
+                $this->estado = 'entregado';
+                $this->save();
+                return;
+            }
+
+            if ($ultimaEntrega->resultado === 'no_entregada') {
+                // Reservada para el mismo cliente hasta que alguien la reagende
+                $this->estado = 'no_asistio';
+                $this->save();
+                return;
+            }
         }
 
         $ultimaCita = $this->ultimaCita;
@@ -69,7 +83,7 @@ class Casa extends Model
         }
     }
     public function reclamos()
-{
-    return $this->hasMany(Reclamo::class);
-}
+    {
+        return $this->hasMany(Reclamo::class);
+    }
 }

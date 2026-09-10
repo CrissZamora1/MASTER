@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -17,6 +18,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -37,8 +39,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                \App\Filament\Widgets\CasasStatsOverview::class,
+                \App\Filament\Widgets\CasasPorEstadoChart::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -53,6 +55,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+            ])
+            ->plugins([
+                FilamentFullCalendarPlugin::make(),
             ]);
     }
 }
