@@ -144,7 +144,7 @@ class CasaResource extends Resource
                     ->color('success')
                     ->visible(fn($record) => $record->estado !== 'disponible')
                     ->requiresConfirmation()
-                    ->action(fn($record) => $record->update(['estado' => 'disponible'])),
+                    ->action(fn($record) => $record->update(['estado' => 'disponible', 'acabados' => true])),
 
                 Tables\Actions\EditAction::make(),
             ])
