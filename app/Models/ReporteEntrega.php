@@ -8,7 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class ReporteEntrega extends Model
 {
     protected $fillable = [
-        'entrega_id', 'descripcion', 'foto', 'estado', 'encargado',
+        'entrega_id',
+        'descripcion',
+        'estado',
+        'encargado',
+        'reclamo_id',
     ];
 
     public function entrega()
@@ -16,14 +20,20 @@ class ReporteEntrega extends Model
         return $this->belongsTo(Entrega::class);
     }
 
-    /**
-     * Tiempo transcurrido desde que se creó el reporte, en formato legible.
-     * Ej: "hace 3 horas", "hace 2 días"
-     */
+    public function fotos()
+    {
+        return $this->hasMany(ReporteEntregaFoto::class);
+    }
+
+    public function reclamo()
+    {
+        return $this->belongsTo(Reclamo::class);
+    }
+
     protected function tiempoTranscurrido(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->created_at?->diffForHumans(),
+            get: fn() => $this->created_at?->diffForHumans(),
         );
     }
 }

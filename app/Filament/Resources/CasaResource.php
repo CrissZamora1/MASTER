@@ -71,6 +71,7 @@ class CasaResource extends Resource
                         'programada' => 'Programada',
                         'reprogramada' => 'Reprogramada',
                         'entregado' => 'Entregado',
+                        'entregado_con_reclamos' => 'Entregado con reclamos',
                         'no_asistio' => 'No asistió',
                         default => $record->estado,
                     } : '-')
@@ -104,7 +105,7 @@ class CasaResource extends Resource
                     ->colors([
                         'success' => 'disponible',
                         'danger' => fn($state) => in_array($state, ['no_disponible', 'no_asistio']),
-                        'warning' => fn($state) => in_array($state, ['programada', 'reprogramada']),
+                        'warning' => fn($state) => in_array($state, ['programada', 'reprogramada', 'entregado_con_reclamos']),
                         'primary' => 'entregado',
                     ])
                     ->formatStateUsing(fn(string $state): string => match ($state) {
@@ -113,6 +114,7 @@ class CasaResource extends Resource
                         'programada' => 'Programada',
                         'reprogramada' => 'Reprogramada',
                         'entregado' => 'Entregado',
+                        'entregado_con_reclamos' => 'Entregado con reclamos',
                         'no_asistio' => 'No asistió',
                         default => $state,
                     }),
@@ -130,6 +132,7 @@ class CasaResource extends Resource
                         'programada' => 'Programada',
                         'reprogramada' => 'Reprogramada',
                         'entregado' => 'Entregado',
+                        'entregado_con_reclamos' => 'Entregado con reclamos',
                         'no_asistio' => 'No asistió',
                     ]),
 

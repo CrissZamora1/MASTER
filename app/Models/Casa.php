@@ -55,35 +55,33 @@ class Casa extends Model
         return $this->hasOne(Entrega::class)->latestOfMany('fecha_hora_entrega');
     }
 
+    public function reclamos()
+    {
+        return $this->hasMany(Reclamo::class);
+    }
+
     public function actualizarEstado(): void
     {
         $ultimaEntrega = $this->ultimaEntrega;
-
-        if ($ultimaEntrega) {
-            if (in_array($ultimaEntrega->resultado, ['entregada', 'entregada_con_reclamos'])) {
-                $this->estado = 'entregado';
-                $this->save();
-                return;
-            }
-
-            if ($ultimaEntrega->resultado === 'no_entregada') {
-                // Reservada para el mismo cliente hasta que alguien la reagende
-                $this->estado = 'no_asistio';
-                $this->save();
-                return;
-            }
-        }
-
         $ultimaCita = $this->ultimaCita;
+
+        $entregaEsMasReciente = $ultimaEntrega
+            && (! $ultimaCita || $ultimaEntrega->fecha_hora_entrega->gte($ultimaCita->fecha_hora));
+
+        if ($entregaEsMasReciente) {
+            $this->estado = match ($ultimaEntrega->resultado) {
+                'entregada' => 'entregado',
+                'entregada_con_reclamos' => 'entregado_con_reclamos',
+                'no_entregada' => 'no_asistio',
+                default => $this->estado,
+            };
+            $this->save();
+            return;
+        }
 
         if ($ultimaCita) {
             $this->estado = $ultimaCita->estado;
             $this->save();
-            return;
         }
-    }
-    public function reclamos()
-    {
-        return $this->hasMany(Reclamo::class);
     }
 }

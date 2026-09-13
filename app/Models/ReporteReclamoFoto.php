@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ReporteReclamoFoto extends Model
+class ReporteEntregaFoto extends Model
 {
-    protected $fillable = ['reporte_reclamo_id', 'ruta'];
+    protected $fillable = ['reporte_entrega_id', 'ruta'];
 
     public function reporte()
     {
-        return $this->belongsTo(ReporteReclamo::class, 'reporte_reclamo_id');
+        return $this->belongsTo(ReporteEntrega::class, 'reporte_entrega_id');
     }
 }

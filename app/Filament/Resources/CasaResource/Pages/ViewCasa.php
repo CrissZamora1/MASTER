@@ -98,9 +98,13 @@ class ViewCasa extends ViewRecord
                                         TextEntry::make('estado')
                                             ->badge()
                                             ->formatStateUsing(fn(string $state): string => match ($state) {
-                                                'pendiente' => 'En garantía',
-                                                'garantia_aceptada' => 'Garantía aceptada',
-                                                'fuera_de_garantia' => 'Fuera de garantía',
+                                                'disponible' => 'Disponible',
+                                                'no_disponible' => 'No disponible',
+                                                'programada' => 'Programada',
+                                                'reprogramada' => 'Reprogramada',
+                                                'entregado' => 'Entregado',
+                                                'entregado_con_reclamos' => 'Entregado con reclamos',
+                                                'no_asistio' => 'No asistió',
                                                 default => $state,
                                             }),
                                         TextEntry::make('estado_reparacion')
