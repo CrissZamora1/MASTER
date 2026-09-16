@@ -3,20 +3,18 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ReporteEntregaResource\Pages;
-use App\Models\Garantia;
-use App\Models\Reclamo;
+use App\Filament\Resources\ReporteEntregaResource\RelationManagers;
 use App\Models\ReporteEntrega;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use App\Filament\Resources\ReclamoResource;
 
 class ReporteEntregaResource extends Resource
 {
     protected static ?string $model = ReporteEntrega::class;
-
+    protected static bool $shouldRegisterNavigation = false;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form
@@ -32,24 +30,8 @@ class ReporteEntregaResource extends Resource
                     ->preload(),
 
                 Forms\Components\Textarea::make('descripcion')
+                    ->label('Notas generales del recorrido')
                     ->columnSpanFull(),
-
-                Forms\Components\FileUpload::make('fotos')
-                    ->label('Fotos')
-                    ->multiple()
-                    ->image()
-                    ->directory('reportes-entrega')
-                    ->reorderable()
-                    ->columnSpanFull(),
-
-                Forms\Components\Select::make('estado')
-                    ->options([
-                        'pendiente' => 'Pendiente',
-                        'no_terminado' => 'No terminado',
-                        'finalizado' => 'Finalizado',
-                    ])
-                    ->default('pendiente')
-                    ->required(),
 
                 Forms\Components\TextInput::make('encargado')
                     ->maxLength(255),
@@ -59,95 +41,30 @@ class ReporteEntregaResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->recordUrl(fn($record) => static::getUrl('edit', ['record' => $record]))
             ->columns([
                 Tables\Columns\TextColumn::make('entrega.casa.numero_casa')
                     ->label('Casa')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('descripcion')
-                    ->limit(50),
-
-                Tables\Columns\BadgeColumn::make('estado')
-                    ->colors([
-                        'danger' => 'pendiente',
-                        'warning' => 'no_terminado',
-                        'success' => 'finalizado',
-                    ])
-                    ->formatStateUsing(fn(string $state): string => match ($state) {
-                        'pendiente' => 'Pendiente',
-                        'no_terminado' => 'No terminado',
-                        'finalizado' => 'Finalizado',
-                        default => $state,
-                    }),
-
                 Tables\Columns\TextColumn::make('encargado'),
 
-                Tables\Columns\IconColumn::make('reclamo_id')
-                    ->label('¿Ya es Reclamo?')
-                    ->boolean()
-                    ->getStateUsing(fn($record) => (bool) $record->reclamo_id),
+                Tables\Columns\TextColumn::make('tickets_totales')
+                    ->label('Tickets')
+                    ->getStateUsing(fn($record) => $record->fotos()->count()),
+
+                Tables\Columns\TextColumn::make('tickets_finalizados')
+                    ->label('Finalizados')
+                    ->getStateUsing(fn($record) => $record->fotos()->where('estado', 'finalizado')->count() . ' / ' . $record->fotos()->count()),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Hace')
                     ->getStateUsing(fn($record) => $record->tiempo_transcurrido)
                     ->sortable(),
             ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('estado')
-                    ->options([
-                        'pendiente' => 'Pendiente',
-                        'no_terminado' => 'No terminado',
-                        'finalizado' => 'Finalizado',
-                    ]),
-            ])
             ->actions([
-                Tables\Actions\Action::make('convertir_a_reclamo')
-                    ->label('Convertir a Reclamo')
-                    ->icon('heroicon-o-exclamation-triangle')
-                    ->color('warning')
-                    ->visible(fn($record) => ! $record->reclamo_id)
-                    ->form([
-                        Forms\Components\Select::make('garantia_id')
-                            ->label('Garantía del defecto')
-                            ->options(Garantia::pluck('nombre', 'id'))
-                            ->required()
-                            ->searchable(),
-                    ])
-                    ->action(function (array $data, ReporteEntrega $record) {
-                        $reclamo = Reclamo::create([
-                            'casa_id' => $record->entrega->casa_id,
-                            'descripcion' => $record->descripcion,
-                            'fecha_reporte' => now(),
-                        ]);
-
-                        $reclamo->garantias()->create([
-                            'garantia_id' => $data['garantia_id'],
-                        ]);
-
-                        $record->update(['reclamo_id' => $reclamo->id]);
-                    }),
-
-                Tables\Actions\Action::make('ver_reclamo')
-                    ->label('Ver Reclamo')
-                    ->icon('heroicon-o-arrow-top-right-on-square')
-                    ->visible(fn($record) => (bool) $record->reclamo_id)
-                    ->url(fn($record) => ReclamoResource::getUrl('edit', ['record' => $record->reclamo_id])),
-
-                Tables\Actions\EditAction::make()
-                    ->using(function ($record, array $data) {
-                        $fotos = $data['fotos'] ?? [];
-                        unset($data['fotos']);
-
-                        $record->update($data);
-
-                        $record->fotos()->delete();
-                        foreach ($fotos as $ruta) {
-                            $record->fotos()->create(['ruta' => $ruta]);
-                        }
-
-                        return $record;
-                    }),
+                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -159,7 +76,7 @@ class ReporteEntregaResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\FotosRelationManager::class,
         ];
     }
 

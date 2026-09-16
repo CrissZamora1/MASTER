@@ -76,7 +76,7 @@ class ReclamoGarantia extends Model
 
     public function reportes()
     {
-        return $this->hasMany(ReporteReclamo::class);
+        return $this->hasMany(ReporteReclamo::class, 'reclamo_garantia_id');
     }
 
     public function fotos()

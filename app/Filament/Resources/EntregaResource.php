@@ -129,13 +129,6 @@ class EntregaResource extends Resource
             ]);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
     public static function getPages(): array
     {
         return [
@@ -170,5 +163,11 @@ class EntregaResource extends Resource
     public static function canDelete($record): bool
     {
         return auth()->user()?->can('delete', $record) ?? false;
+    }
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\FotosRelationManager::class,
+        ];
     }
 }

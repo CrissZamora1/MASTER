@@ -7,8 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class Entrega extends Model
 {
     protected $fillable = [
-        'cita_id', 'casa_id', 'cliente_id',
-        'fecha_hora_entrega', 'resultado', 'observaciones',
+        'cita_id',
+        'casa_id',
+        'cliente_id',
+        'fecha_hora_entrega',
+        'resultado',
+        'observaciones',
     ];
 
     protected $casts = [
@@ -34,5 +38,10 @@ class Entrega extends Model
     public function reportesEntrega()
     {
         return $this->hasMany(ReporteEntrega::class);
+    }
+
+    public function fotos()
+    {
+        return $this->hasMany(ReporteEntregaFoto::class);
     }
 }
