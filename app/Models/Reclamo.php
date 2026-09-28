@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Reclamo extends Model
 {
@@ -14,6 +15,13 @@ class Reclamo extends Model
     protected $casts = [
         'fecha_reporte' => 'date',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Reclamo $reclamo) {
+            $reclamo->ticket ??= 'TK-' . strtoupper(Str::random(8));
+        });
+    }
 
     public function casa()
     {

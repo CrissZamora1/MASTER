@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Casa extends Model
@@ -60,12 +61,25 @@ class Casa extends Model
         return $this->hasMany(Reclamo::class);
     }
 
+    public function scopeVisiblePara(Builder $query, User $user): Builder
+    {
+        $ids = $user->proyectoIdsAccesibles();
+
+        return $ids === null ? $query : $query->whereIn('proyecto_id', $ids);
+    }
+
     public function actualizarEstado(): void
     {
         $ultimaCita = $this->ultimaCita;
+        $entrega = $ultimaCita?->entrega;
 
-        // Si la última cita ya tiene una entrega registrada, esa entrega manda
-        $entrega = $ultimaCita?->entrega ?? $this->ultimaEntrega;
+        // Una entrega suelta solo manda si es más reciente que la última cita
+        if (! $entrega) {
+            $suelta = $this->ultimaEntrega;
+            if ($suelta && (! $ultimaCita || $suelta->fecha_hora_entrega->gt($ultimaCita->fecha_hora))) {
+                $entrega = $suelta;
+            }
+        }
 
         if ($entrega) {
             $this->estado = match ($entrega->resultado) {

@@ -7,7 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Support\Collection;
 
 class User extends Authenticatable
 {
@@ -99,6 +99,15 @@ class User extends Authenticatable
         }
 
         return $this->proyectosAsignados()->where('proyectos.id', $proyectoId)->exists();
+    }
+
+    public function proyectoIdsAccesibles(): ?Collection
+    {
+        if ($this->esMaster() || $this->esSuper()) {
+            return null; // sin restricción
+        }
+
+        return $this->proyectosAsignados()->pluck('proyectos.id');
     }
 
     public function contratista()

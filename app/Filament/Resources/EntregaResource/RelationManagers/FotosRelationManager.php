@@ -128,17 +128,24 @@ class FotosRelationManager extends RelationManager
                             ->searchable(),
                     ])
                     ->action(function (array $data, $record) {
-                        $reclamo = Reclamo::create([
-                            'casa_id' => $record->entrega->casa_id,
-                            'descripcion' => $record->descripcion,
-                            'fecha_reporte' => now(),
-                        ]);
+                        \Illuminate\Support\Facades\DB::transaction(function () use ($data, $record) {
+                            $reclamo = Reclamo::create([
+                                'casa_id' => $record->entrega->casa_id,
+                                'descripcion' => $record->descripcion,
+                                'fecha_reporte' => now(),
+                            ]);
 
-                        $reclamo->garantias()->create([
-                            'garantia_id' => $data['garantia_id'],
-                        ]);
+                            $ticket = $reclamo->garantias()->create([
+                                'garantia_id' => $data['garantia_id'],
+                                'contratista_id' => $record->contratista_id,
+                            ]);
 
-                        $record->update(['reclamo_id' => $reclamo->id]);
+                            if ($record->ruta) {
+                                $ticket->fotos()->create(['ruta' => $record->ruta]);
+                            }
+
+                            $record->update(['reclamo_id' => $reclamo->id]);
+                        });
                     }),
 
                 Tables\Actions\Action::make('ver_reclamo')
