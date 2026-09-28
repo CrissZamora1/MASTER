@@ -48,10 +48,10 @@ class ReportesSupervisorRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn(Builder $query) => $query->whereHas('creadoPor.rol', fn($q) => $q->where('codigo', 'SUP')))
+            ->modifyQueryUsing(fn(Builder $query) => $query->whereDoesntHave('creadoPor.rol', fn($q) => $q->where('codigo', 'CONT')))
             ->recordTitleAttribute('descripcion')
             ->columns([
-                Tables\Columns\TextColumn::make('creadoPor.name')->label('Supervisor'),
+                Tables\Columns\TextColumn::make('creadoPor.name')->label('Autor'),
                 Tables\Columns\TextColumn::make('descripcion')->limit(60),
                 Tables\Columns\BadgeColumn::make('estado')
                     ->colors(['danger' => 'pendiente', 'warning' => 'en_proceso', 'success' => 'finalizado'])
