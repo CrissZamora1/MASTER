@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CasaResource\Pages;
 
+use App\Enums\CasaEstado;
 use App\Filament\Resources\CasaResource;
 use Filament\Actions;
 use Filament\Infolists\Components\Section;
@@ -35,15 +36,7 @@ class ViewCasa extends ViewRecord
                         TextEntry::make('anexo')->label('Anexo'),
                         TextEntry::make('estado')
                             ->badge()
-                            ->formatStateUsing(fn(string $state): string => match ($state) {
-                                'disponible' => 'Disponible',
-                                'no_disponible' => 'No disponible',
-                                'programada' => 'Programada',
-                                'reprogramada' => 'Reprogramada',
-                                'entregado' => 'Entregado',
-                                'no_asistio' => 'No asistió',
-                                default => $state,
-                            }),
+                            ->formatStateUsing(fn (?string $state) => CasaEstado::tryFrom($state)?->getLabel() ?? $state),
                     ]),
 
                 Section::make('Cliente actual')
@@ -98,13 +91,9 @@ class ViewCasa extends ViewRecord
                                         TextEntry::make('estado')
                                             ->badge()
                                             ->formatStateUsing(fn(string $state): string => match ($state) {
-                                                'disponible' => 'Disponible',
-                                                'no_disponible' => 'No disponible',
-                                                'programada' => 'Programada',
-                                                'reprogramada' => 'Reprogramada',
-                                                'entregado' => 'Entregado',
-                                                'entregado_con_reclamos' => 'Entregado con reclamos',
-                                                'no_asistio' => 'No asistió',
+                                                'pendiente' => 'En garantía',
+                                                'garantia_aceptada' => 'Garantía aceptada',
+                                                'fuera_de_garantia' => 'Fuera de garantía',
                                                 default => $state,
                                             }),
                                         TextEntry::make('estado_reparacion')

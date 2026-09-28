@@ -44,7 +44,15 @@ class ReclamoGarantiaResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->columns([]);
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('reclamo.ticket')->label('Ticket')->searchable(),
+                Tables\Columns\TextColumn::make('reclamo.casa.numero_casa')->label('Casa'),
+                Tables\Columns\TextColumn::make('garantia.nombre')->label('Garantía'),
+                Tables\Columns\TextColumn::make('estado_reparacion')->label('Reparación')->badge(),
+                Tables\Columns\TextColumn::make('fecha_fin')->label('Vence')->date('d/m/Y'),
+            ])
+            ->recordUrl(fn ($record) => static::getUrl('view', ['record' => $record]));
     }
 
     public static function getRelations(): array

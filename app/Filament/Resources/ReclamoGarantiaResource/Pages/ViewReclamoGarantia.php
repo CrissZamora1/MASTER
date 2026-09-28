@@ -3,10 +3,10 @@
 namespace App\Filament\Resources\ReclamoGarantiaResource\Pages;
 
 use App\Filament\Resources\ReclamoGarantiaResource;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\ViewEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -48,14 +48,7 @@ class ViewReclamoGarantia extends ViewRecord
                         RepeatableEntry::make('fotos')
                             ->label('')
                             ->schema([
-                                TextEntry::make('ruta')
-                                    ->label('')
-                                    ->html()
-                                    ->formatStateUsing(fn ($state) => new \Illuminate\Support\HtmlString(
-                                        '<a href="'.\Illuminate\Support\Facades\Storage::url($state).'" target="_blank">
-                                            <img src="'.\Illuminate\Support\Facades\Storage::url($state).'" style="width:150px;height:150px;object-fit:cover;border-radius:8px;cursor:pointer;">
-                                        </a>'
-                                    )),
+                                ImageEntry::make('ruta')->label('')->disk('public')->height(150),
                             ])
                             ->columns(4),
                     ]),

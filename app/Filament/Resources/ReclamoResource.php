@@ -28,7 +28,7 @@ class ReclamoResource extends Resource
             ->schema([
                 Forms\Components\Select::make('casa_id')
                     ->label('Casa')
-                    ->relationship('casa', 'numero_casa')
+                    ->relationship('casa', 'numero_casa', fn (Builder $query) => $query->visiblePara(auth()->user()))
                     ->required()
                     ->searchable()
                     ->preload(),

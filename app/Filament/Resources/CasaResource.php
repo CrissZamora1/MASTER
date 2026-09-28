@@ -25,7 +25,8 @@ class CasaResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('proyecto_id')
-                    ->relationship('proyecto', 'nombre')
+                    ->relationship('proyecto', 'nombre', fn (Builder $query) =>
+                        ($ids = auth()->user()->proyectoIdsAccesibles()) ? $query->whereIn('proyectos.id', $ids) : $query)
                     ->required()
                     ->searchable()
                     ->preload()
@@ -152,18 +153,10 @@ class CasaResource extends Resource
                     ->label('Marcar disponible')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn($record) => !in_array($record->estado, ['disponible', 'entregado', 'programada']))
+                    ->visible(fn ($record) => auth()->user()->can('update', $record)
+                    && in_array($record->estado, ['no_disponible', 'no_asistio']))
                     ->requiresConfirmation()
                     ->action(function ($record) {
-                        if (in_array($record->estado, ['entregado', 'programada'])) {
-                            \Filament\Notifications\Notification::make()
-                                ->title('No se puede marcar disponible')
-                                ->body('Esta casa ya fue entregada o tiene una visita programada.')
-                                ->danger()
-                                ->send();
-                            return;
-                        }
-
                         $record->update(['estado' => 'disponible', 'acabados' => true]);
                     }),
 

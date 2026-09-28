@@ -26,7 +26,7 @@ class CitaResource extends Resource
                 Forms\Components\Select::make('casa_id')
                     ->label('Casa')
                     ->options(function (?Cita $record) {
-                        return Casa::query()
+                        return Casa::query()->visiblePara(auth()->user())
                             ->where(function ($q) use ($record) {
                                 $q->where('estado', 'disponible');
                                 if ($record?->casa_id) {
@@ -100,11 +100,13 @@ class CitaResource extends Resource
                     ->label('Resultado')
                     ->colors([
                         'success' => 'entregado',
+                        'warning' => 'entregado_con_reclamos',
                         'danger' => 'no_asistio',
                         'gray' => fn($state) => in_array($state, ['programada', 'reprogramada', 'disponible']),
                     ])
                     ->formatStateUsing(fn(?string $state): string => match ($state) {
                         'entregado' => 'Entregado',
+                        'entregado_con_reclamos' => 'Entregado con reclamos',
                         'no_asistio' => 'No asistió',
                         default => 'Pendiente',
                     }),

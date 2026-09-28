@@ -13,10 +13,14 @@ class CalendarWidget extends FullCalendarWidget
 
     public function fetchEvents(array $fetchInfo): array
     {
+        $ids = auth()->user()->proyectoIdsAccesibles();
+        $scopeCasa = fn ($q) => $q->when($ids !== null, fn ($q2) => $q2->whereIn('proyecto_id', $ids));
+
         $eventos = [];
 
         $citas = Cita::with(['casa', 'cliente'])
             ->whereBetween('fecha_hora', [$fetchInfo['start'], $fetchInfo['end']])
+            ->whereHas('casa', $scopeCasa)
             ->get();
 
         foreach ($citas as $cita) {
@@ -30,6 +34,7 @@ class CalendarWidget extends FullCalendarWidget
 
         $entregas = Entrega::with(['casa', 'cliente'])
             ->whereBetween('fecha_hora_entrega', [$fetchInfo['start'], $fetchInfo['end']])
+            ->whereHas('casa', $scopeCasa)
             ->get();
 
         foreach ($entregas as $entrega) {
@@ -47,6 +52,7 @@ class CalendarWidget extends FullCalendarWidget
 
         $reportes = \App\Models\ReporteReclamo::with(['creadoPor', 'reclamoGarantia.garantia', 'reclamoGarantia.reclamo.casa'])
             ->whereBetween('created_at', [$fetchInfo['start'], $fetchInfo['end']])
+            ->whereHas('reclamoGarantia.reclamo.casa', $scopeCasa)
             ->get();
 
         foreach ($reportes as $reporte) {
