@@ -76,6 +76,33 @@ class EntregaResource extends Resource
 
                 Forms\Components\Textarea::make('observaciones')
                     ->columnSpanFull(),
+
+                Forms\Components\Repeater::make('fotos')
+                    ->relationship()
+                    ->label('Tickets de reparación (defectos encontrados)')
+                    ->schema([
+                        Forms\Components\FileUpload::make('ruta')
+                            ->label('Foto (estado inicial)')
+                            ->image()
+                            ->disk('public')
+                            ->directory('reportes-entrega')
+                            ->required(),
+
+                        Forms\Components\Textarea::make('descripcion')
+                            ->label('Descripción del defecto')
+                            ->columnSpanFull(),
+
+                        Forms\Components\Select::make('contratista_id')
+                            ->label('Contratista encargado')
+                            ->relationship('contratista', 'nombre')
+                            ->searchable()
+                            ->preload(),
+                    ])
+                    ->columns(2)
+                    ->collapsible()
+                    ->defaultItems(0)
+                    ->addActionLabel('Agregar ticket')
+                    ->columnSpanFull(),
             ]);
     }
 

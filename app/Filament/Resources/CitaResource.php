@@ -34,6 +34,7 @@ class CitaResource extends Resource
                                 }
                             })
                             ->with(['proyecto', 'tipoCasa'])
+                            ->orderByRaw('CAST(numero_casa AS UNSIGNED) asc')
                             ->get()
                             ->mapWithKeys(fn($casa) => [
                                 $casa->id => "Casa {$casa->numero_casa} - {$casa->tipoCasa?->nombre} - {$casa->proyecto?->nombre}",

@@ -22,7 +22,7 @@ class FotosRelationManager extends RelationManager
         return $form
             ->schema([
                 Forms\Components\FileUpload::make('ruta')
-                    ->label('Foto')
+                    ->label('Foto (estado inicial)')
                     ->image()
                     ->disk('public')
                     ->directory('reportes-entrega')
@@ -31,6 +31,12 @@ class FotosRelationManager extends RelationManager
                 Forms\Components\Textarea::make('descripcion')
                     ->label('Descripción del defecto')
                     ->columnSpanFull(),
+
+                Forms\Components\Select::make('contratista_id')
+                    ->label('Contratista encargado')
+                    ->relationship('contratista', 'nombre')
+                    ->searchable()
+                    ->preload(),
             ]);
     }
 
@@ -47,12 +53,22 @@ class FotosRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('descripcion')
                     ->limit(50),
 
+                Tables\Columns\TextColumn::make('contratista.nombre')
+                    ->label('Encargado')
+                    ->default('—'),
+
+                Tables\Columns\ImageColumn::make('ruta_final')
+                    ->label('Foto final')
+                    ->disk('public')
+                    ->size(80)
+                    ->default(null),
+
                 Tables\Columns\BadgeColumn::make('estado')
                     ->colors([
                         'danger' => 'pendiente',
                         'success' => 'finalizado',
                     ])
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         'pendiente' => 'Pendiente',
                         'finalizado' => 'Finalizado',
                         default => $state,
@@ -65,14 +81,14 @@ class FotosRelationManager extends RelationManager
                 Tables\Columns\IconColumn::make('reclamo_id')
                     ->label('¿Es Reclamo?')
                     ->boolean()
-                    ->getStateUsing(fn ($record) => (bool) $record->reclamo_id),
+                    ->getStateUsing(fn($record) => (bool) $record->reclamo_id),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                Tables\Actions\Action::make('visto_bueno')
-                    ->label('Marcar visto bueno')
+                Tables\Actions\Action::make('marcar_finalizado')
+                    ->label('Marcar finalizado')
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
                     ->visible(fn ($record) => $record->estado !== 'finalizado' && (
@@ -81,14 +97,29 @@ class FotosRelationManager extends RelationManager
                         || auth()->user()?->esAdmin()
                         || auth()->user()?->esSupervisor()
                     ))
+                    ->form([
+                        Forms\Components\FileUpload::make('ruta_final')
+                            ->label('Foto de cómo quedó terminado')
+                            ->image()
+                            ->disk('public')
+                            ->directory('reportes-entrega-finalizados')
+                            ->required(),
+                    ])
                     ->requiresConfirmation()
-                    ->action(fn ($record) => $record->marcarVistoBueno()),
+                    ->action(function (array $data, $record) {
+                        $record->update([
+                            'ruta_final' => $data['ruta_final'],
+                            'estado' => 'finalizado',
+                            'aprobado_por' => auth()->id(),
+                            'aprobado_at' => now(),
+                        ]);
+                    }),
 
                 Tables\Actions\Action::make('convertir_a_reclamo')
                     ->label('Convertir a Reclamo')
                     ->icon('heroicon-o-exclamation-triangle')
                     ->color('warning')
-                    ->visible(fn ($record) => ! $record->reclamo_id)
+                    ->visible(fn($record) => ! $record->reclamo_id)
                     ->form([
                         Forms\Components\Select::make('garantia_id')
                             ->label('Garantía del defecto')
@@ -113,8 +144,8 @@ class FotosRelationManager extends RelationManager
                 Tables\Actions\Action::make('ver_reclamo')
                     ->label('Ver Reclamo')
                     ->icon('heroicon-o-arrow-top-right-on-square')
-                    ->visible(fn ($record) => (bool) $record->reclamo_id)
-                    ->url(fn ($record) => ReclamoResource::getUrl('edit', ['record' => $record->reclamo_id])),
+                    ->visible(fn($record) => (bool) $record->reclamo_id)
+                    ->url(fn($record) => ReclamoResource::getUrl('edit', ['record' => $record->reclamo_id])),
 
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

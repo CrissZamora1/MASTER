@@ -78,7 +78,6 @@ class CasaResource extends Resource
                     ->visible(fn(string $operation): bool => $operation === 'edit'),
             ]);
     }
-
     public static function table(Table $table): Table
     {
         return $table
@@ -86,7 +85,12 @@ class CasaResource extends Resource
                 Tables\Columns\TextColumn::make('proyecto.nombre')
                     ->label('Proyecto')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable(query: function ($query, string $direction) {
+                        $query->orderBy(
+                            \App\Models\Proyecto::select('nombre')->whereColumn('proyectos.id', 'casas.proyecto_id'),
+                            $direction
+                        )->orderByRaw('CAST(numero_casa AS UNSIGNED) asc');
+                    }),
 
                 Tables\Columns\TextColumn::make('tipoCasa.nombre')
                     ->label('Tipo')
@@ -96,7 +100,9 @@ class CasaResource extends Resource
                 Tables\Columns\TextColumn::make('numero_casa')
                     ->label('N° Casa')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable(query: function ($query, string $direction) {
+                        $query->orderByRaw("CAST(numero_casa AS UNSIGNED) {$direction}");
+                    }),
 
                 Tables\Columns\TextColumn::make('cluster')
                     ->searchable(),
@@ -124,6 +130,7 @@ class CasaResource extends Resource
                     ->boolean(),
             ])
             ->recordUrl(fn($record) => static::getUrl('view', ['record' => $record]))
+            ->defaultSort(fn($query) => $query->orderByRaw('CAST(numero_casa AS UNSIGNED) asc'))
             ->filters([
                 Tables\Filters\SelectFilter::make('estado')
                     ->options([
@@ -145,9 +152,20 @@ class CasaResource extends Resource
                     ->label('Marcar disponible')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn($record) => $record->estado !== 'disponible')
+                    ->visible(fn($record) => !in_array($record->estado, ['disponible', 'entregado', 'programada']))
                     ->requiresConfirmation()
-                    ->action(fn($record) => $record->update(['estado' => 'disponible', 'acabados' => true])),
+                    ->action(function ($record) {
+                        if (in_array($record->estado, ['entregado', 'programada'])) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('No se puede marcar disponible')
+                                ->body('Esta casa ya fue entregada o tiene una visita programada.')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        $record->update(['estado' => 'disponible', 'acabados' => true]);
+                    }),
 
                 Tables\Actions\EditAction::make(),
             ])
@@ -157,7 +175,6 @@ class CasaResource extends Resource
                 ]),
             ]);
     }
-
     public static function getRelations(): array
     {
         return [

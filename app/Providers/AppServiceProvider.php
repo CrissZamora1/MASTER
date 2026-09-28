@@ -30,6 +30,7 @@ use App\Policies\ReporteReclamoPolicy;
 use App\Policies\TipoCasaPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 
@@ -49,6 +50,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if ($this->app->environment('local') && str_contains(config('app.url'), 'ngrok')) {
+            URL::forceScheme('https');
+        }
+
         // 1. Configuración de Super Admin (MASTER)
         Gate::before(function ($user, $ability) {
             if ($user->esMaster()) {

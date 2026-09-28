@@ -10,4 +10,9 @@ class CitaObserver
     {
         $cita->casa?->actualizarEstado();
     }
+
+    public function deleted(Cita $cita): void
+    {
+        $cita->casa?->actualizarEstado();
+    }
 }

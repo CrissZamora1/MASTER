@@ -9,11 +9,13 @@ class ReporteEntregaFoto extends Model
     protected $fillable = [
         'entrega_id',
         'ruta',
+        'ruta_final',
         'descripcion',
         'estado',
         'aprobado_por',
         'aprobado_at',
         'reclamo_id',
+        'contratista_id',
     ];
 
     protected $casts = [
@@ -42,5 +44,10 @@ class ReporteEntregaFoto extends Model
             'aprobado_por' => auth()->id(),
             'aprobado_at' => now(),
         ]);
+    }
+
+    public function contratista()
+    {
+        return $this->belongsTo(Contratista::class);
     }
 }

@@ -48,15 +48,18 @@ class ReportesSupervisorRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('creadoPor.rol', fn ($q) => $q->where('codigo', 'SUP')))
+            ->modifyQueryUsing(fn(Builder $query) => $query->whereHas('creadoPor.rol', fn($q) => $q->where('codigo', 'SUP')))
             ->recordTitleAttribute('descripcion')
             ->columns([
                 Tables\Columns\TextColumn::make('creadoPor.name')->label('Supervisor'),
                 Tables\Columns\TextColumn::make('descripcion')->limit(60),
                 Tables\Columns\BadgeColumn::make('estado')
                     ->colors(['danger' => 'pendiente', 'warning' => 'en_proceso', 'success' => 'finalizado'])
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'pendiente' => 'Pendiente', 'en_proceso' => 'En proceso', 'finalizado' => 'Finalizado', default => $state,
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
+                        'pendiente' => 'Pendiente',
+                        'en_proceso' => 'En proceso',
+                        'finalizado' => 'Finalizado',
+                        default => $state,
                     }),
                 Tables\Columns\ImageColumn::make('fotos.ruta')->label('Fotos')->circular()->stacked(),
                 Tables\Columns\TextColumn::make('created_at')->label('Creado')->dateTime('d/m/Y H:i'),
@@ -90,5 +93,10 @@ class ReportesSupervisorRelationManager extends RelationManager
                     }),
                 Tables\Actions\DeleteAction::make(),
             ]);
+    }
+
+    public static function canViewForRecord(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): bool
+    {
+        return auth()->user()->rol?->codigo !== 'CONT';
     }
 }

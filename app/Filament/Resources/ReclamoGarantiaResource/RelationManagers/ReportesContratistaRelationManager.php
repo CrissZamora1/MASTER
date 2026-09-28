@@ -17,7 +17,7 @@ class ReportesContratistaRelationManager extends RelationManager
 
     public function isReadOnly(): bool
     {
-        return false;
+        return !auth()->user()->esContratista();
     }
 
     public function form(Form $form): Form
@@ -48,15 +48,31 @@ class ReportesContratistaRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('creadoPor.rol', fn ($q) => $q->where('codigo', 'CONT')))
+            ->modifyQueryUsing(function (Builder $query) {
+                $user = auth()->user();
+
+                $query->whereHas('creadoPor.rol', fn($q) => $q->where('codigo', 'CONT'));
+
+                if ($user->esContratista()) {
+                    $proyectoId = $this->getOwnerRecord()->reclamo->casa->proyecto_id;
+                    if (!$user->tieneAccesoAProyecto($proyectoId)) {
+                        $query->whereRaw('1 = 0'); // no debería llegar aquí si ya no ve el reclamo, pero por seguridad
+                    }
+                }
+
+                return $query;
+            })
             ->recordTitleAttribute('descripcion')
             ->columns([
                 Tables\Columns\TextColumn::make('creadoPor.name')->label('Contratista'),
                 Tables\Columns\TextColumn::make('descripcion')->limit(60),
                 Tables\Columns\BadgeColumn::make('estado')
                     ->colors(['danger' => 'pendiente', 'warning' => 'en_proceso', 'success' => 'finalizado'])
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'pendiente' => 'Pendiente', 'en_proceso' => 'En proceso', 'finalizado' => 'Finalizado', default => $state,
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
+                        'pendiente' => 'Pendiente',
+                        'en_proceso' => 'En proceso',
+                        'finalizado' => 'Finalizado',
+                        default => $state,
                     }),
                 Tables\Columns\ImageColumn::make('fotos.ruta')->label('Fotos')->circular()->stacked(),
                 Tables\Columns\TextColumn::make('created_at')->label('Creado')->dateTime('d/m/Y H:i'),

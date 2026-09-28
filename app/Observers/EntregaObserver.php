@@ -10,4 +10,9 @@ class EntregaObserver
     {
         $entrega->casa?->actualizarEstado();
     }
+
+    public function deleted(Entrega $entrega): void
+    {
+        $entrega->casa?->actualizarEstado();
+    }
 }

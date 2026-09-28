@@ -12,6 +12,9 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
+
 
 class ReclamoResource extends Resource
 {
@@ -44,6 +47,35 @@ class ReclamoResource extends Resource
             ]);
     }
 
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist->schema([
+            Infolists\Components\Section::make('Información del reclamo')
+                ->schema([
+                    Infolists\Components\TextEntry::make('casa.numero_casa')->label('Casa'),
+                    Infolists\Components\TextEntry::make('ticket'),
+                    Infolists\Components\TextEntry::make('fecha_reporte')->date('d/m/Y'),
+                    Infolists\Components\TextEntry::make('descripcion')->columnSpanFull(),
+                ])
+                ->columns(3),
+
+            Infolists\Components\Section::make('Garantías relacionadas')
+                ->schema([
+                    Infolists\Components\RepeatableEntry::make('garantias')
+                        ->label('')
+                        ->schema([
+                            Infolists\Components\TextEntry::make('garantia.nombre')->label('Garantía'),
+                            Infolists\Components\TextEntry::make('estado'),
+                            Infolists\Components\TextEntry::make('fecha_fin')->label('Vence')->date('d/m/Y'),
+                            Infolists\Components\TextEntry::make('id')
+                                ->label('Ver detalle')
+                                ->url(fn($record) => route('filament.admin.resources.reclamo-garantias.view', $record))
+                                ->color('primary'),
+                        ])
+                        ->columns(4),
+                ]),
+        ]);
+    }
     public static function table(Table $table): Table
     {
         return $table
@@ -83,8 +115,10 @@ class ReclamoResource extends Resource
                     }),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
+
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
@@ -104,7 +138,22 @@ class ReclamoResource extends Resource
         return [
             'index' => Pages\ListReclamos::route('/'),
             'create' => Pages\CreateReclamo::route('/create'),
+            'view' => Pages\ViewReclamo::route('/{record}'),
             'edit' => Pages\EditReclamo::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if (!$user || $user->esMaster() || $user->esSuper()) {
+            return $query;
+        }
+
+        return $query->whereHas('casa', function ($q) use ($user) {
+            $q->whereIn('proyecto_id', $user->proyectosAsignados()->pluck('proyectos.id'));
+        });
     }
 }

@@ -62,14 +62,13 @@ class Casa extends Model
 
     public function actualizarEstado(): void
     {
-        $ultimaEntrega = $this->ultimaEntrega;
         $ultimaCita = $this->ultimaCita;
 
-        $entregaEsMasReciente = $ultimaEntrega
-            && (! $ultimaCita || $ultimaEntrega->fecha_hora_entrega->gte($ultimaCita->fecha_hora));
+        // Si la última cita ya tiene una entrega registrada, esa entrega manda
+        $entrega = $ultimaCita?->entrega ?? $this->ultimaEntrega;
 
-        if ($entregaEsMasReciente) {
-            $this->estado = match ($ultimaEntrega->resultado) {
+        if ($entrega) {
+            $this->estado = match ($entrega->resultado) {
                 'entregada' => 'entregado',
                 'entregada_con_reclamos' => 'entregado_con_reclamos',
                 'no_entregada' => 'no_asistio',

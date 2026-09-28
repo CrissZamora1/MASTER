@@ -67,8 +67,17 @@ class ReclamoGarantiaResource extends Resource
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        if ($user && $user->esContratista()) {
+        if (!$user) {
+            return $query;
+        }
+
+        if ($user->esContratista()) {
             $query->where('contratista_id', $user->contratista?->id);
+        } elseif (!$user->esMaster() && !$user->esSuper()) {
+            // SUP y ADMIN: solo reclamos de casas de sus proyectos asignados
+            $query->whereHas('reclamo.casa', function ($q) use ($user) {
+                $q->whereIn('proyecto_id', $user->proyectosAsignados()->pluck('proyectos.id'));
+            });
         }
 
         return $query;

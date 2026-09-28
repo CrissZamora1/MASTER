@@ -23,3 +23,4 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 sistema_gestion_casas.sql
+/storage/framework/lsp-*.php
