@@ -54,9 +54,9 @@ class ReportesContratistaRelationManager extends RelationManager
                 $query->whereHas('creadoPor.rol', fn($q) => $q->where('codigo', 'CONT'));
 
                 if ($user->esContratista()) {
-                    $proyectoId = $this->getOwnerRecord()->reclamo->casa->proyecto_id;
-                    if (!$user->tieneAccesoAProyecto($proyectoId)) {
-                        $query->whereRaw('1 = 0'); // no debería llegar aquí si ya no ve el reclamo, pero por seguridad
+                    $proyectoId = $this->getOwnerRecord()->reclamo?->casa?->proyecto_id;
+                    if (! $proyectoId || ! $user->tieneAccesoAProyecto($proyectoId)) {
+                        $query->whereRaw('1 = 0'); // por seguridad
                     }
                 }
 
@@ -83,7 +83,12 @@ class ReportesContratistaRelationManager extends RelationManager
                         $fotos = $data['fotos'] ?? [];
                         unset($data['fotos']);
 
-                        $reporte = $model::create($data + ['reclamo_garantia_id' => $this->getOwnerRecord()->id]);
+                        $owner = $this->getOwnerRecord();
+
+                        $reporte = $model::create($data + [
+                            'reclamo_garantia_id' => $owner->id,
+                            'contratista_id' => $owner->contratista_id,
+                        ]);
 
                         foreach ($fotos as $ruta) {
                             $reporte->fotos()->create(['ruta' => $ruta]);
@@ -94,14 +99,25 @@ class ReportesContratistaRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
+                    ->mutateRecordDataUsing(function (array $data, $record): array {
+                        $data['fotos'] = $record->fotos()->pluck('ruta')->all();
+
+                        return $data;
+                    })
                     ->using(function ($record, array $data) {
-                        $fotos = $data['fotos'] ?? [];
+                        $fotos = array_values($data['fotos'] ?? []);
                         unset($data['fotos']);
+
                         $record->update($data);
-                        $record->fotos()->delete();
-                        foreach ($fotos as $ruta) {
+
+                        $actuales = $record->fotos()->pluck('ruta')->all();
+
+                        $record->fotos()->whereNotIn('ruta', $fotos)->delete();
+
+                        foreach (array_diff($fotos, $actuales) as $ruta) {
                             $record->fotos()->create(['ruta' => $ruta]);
                         }
+
                         return $record;
                     }),
                 Tables\Actions\DeleteAction::make(),

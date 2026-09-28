@@ -81,14 +81,25 @@ class ReportesSupervisorRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
+                    ->mutateRecordDataUsing(function (array $data, $record): array {
+                        $data['fotos'] = $record->fotos()->pluck('ruta')->all();
+
+                        return $data;
+                    })
                     ->using(function ($record, array $data) {
-                        $fotos = $data['fotos'] ?? [];
+                        $fotos = array_values($data['fotos'] ?? []);
                         unset($data['fotos']);
+
                         $record->update($data);
-                        $record->fotos()->delete();
-                        foreach ($fotos as $ruta) {
+
+                        $actuales = $record->fotos()->pluck('ruta')->all();
+
+                        $record->fotos()->whereNotIn('ruta', $fotos)->delete();
+
+                        foreach (array_diff($fotos, $actuales) as $ruta) {
                             $record->fotos()->create(['ruta' => $ruta]);
                         }
+
                         return $record;
                     }),
                 Tables\Actions\DeleteAction::make(),
