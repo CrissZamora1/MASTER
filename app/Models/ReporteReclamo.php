@@ -8,6 +8,7 @@ class ReporteReclamo extends Model
 {
     protected $fillable = [
         'reclamo_garantia_id',
+        'contratista_id',
         'descripcion',
         'estado',
         'creado_por_user_id',
@@ -33,6 +34,11 @@ class ReporteReclamo extends Model
     public function reclamoGarantia()
     {
         return $this->belongsTo(ReclamoGarantia::class);
+    }
+
+    public function contratista()
+    {
+        return $this->belongsTo(Contratista::class);
     }
 
     public function creadoPor()
