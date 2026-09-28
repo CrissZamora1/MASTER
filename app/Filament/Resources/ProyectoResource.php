@@ -17,7 +17,17 @@ class ProyectoResource extends Resource
 {
     protected static ?string $model = Proyecto::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Inventario';
+
+    protected static ?int $navigationSort = 1;
+
+    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
+
+    protected static ?string $navigationLabel = 'Proyectos';
+
+    protected static ?string $modelLabel = 'proyecto';
+
+    protected static ?string $pluralModelLabel = 'proyectos';
 
     public static function form(Form $form): Form
     {

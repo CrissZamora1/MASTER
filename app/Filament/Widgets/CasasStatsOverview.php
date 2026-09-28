@@ -2,49 +2,60 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\CasaResource;
 use App\Models\Casa;
+use App\Models\ReclamoGarantia;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Livewire\Attributes\On;
 
 class CasasStatsOverview extends BaseWidget
 {
-    public string $proyectoSeleccionado = 'todos';
+    protected static ?int $sort = 1;
 
-    #[On('proyecto-filtro-actualizado')]
-    public function actualizarProyecto($proyectoId): void
+    public static function canView(): bool
     {
-        $this->proyectoSeleccionado = $proyectoId;
+        return ! auth()->user()?->esContratista();
     }
 
     protected function getStats(): array
     {
-        $query = Casa::query();
+        $user = auth()->user();
 
-        if ($this->proyectoSeleccionado !== 'todos') {
-            $query->where('proyecto_id', $this->proyectoSeleccionado);
-        }
+        $query = Casa::query()->visiblePara($user);
+
+        $ticketsAbiertos = ReclamoGarantia::query()
+            ->where('estado_reparacion', '!=', 'finalizada')
+            ->whereHas('reclamo.casa', fn ($q) => $q->visiblePara($user))
+            ->count();
 
         return [
+            Stat::make('Total de casas', (clone $query)->count())
+                ->icon('heroicon-o-home-modern')
+                ->color('gray'),
+
             Stat::make('Disponibles', (clone $query)->where('estado', 'disponible')->count())
                 ->icon('heroicon-o-check-circle')
-                ->color('success'),
-
-            Stat::make('No disponibles', (clone $query)->where('estado', 'no_disponible')->count())
-                ->icon('heroicon-o-x-circle')
-                ->color('danger'),
+                ->color('success')
+                ->url(CasaResource::getUrl('index', ['tableFilters' => ['estado' => ['value' => 'disponible']]])),
 
             Stat::make('Con cita programada', (clone $query)->whereIn('estado', ['programada', 'reprogramada'])->count())
                 ->icon('heroicon-o-calendar-days')
-                ->color('warning'),
+                ->color('info')
+                ->url(CasaResource::getUrl('index', ['tableFilters' => ['estado' => ['value' => 'programada']]])),
 
             Stat::make('Entregadas', (clone $query)->where('estado', 'entregado')->count())
                 ->icon('heroicon-o-key')
-                ->color('primary'),
+                ->color('primary')
+                ->url(CasaResource::getUrl('index', ['tableFilters' => ['estado' => ['value' => 'entregado']]])),
 
-            Stat::make('No asistió', (clone $query)->where('estado', 'no_asistio')->count())
+            Stat::make('No asistieron', (clone $query)->where('estado', 'no_asistio')->count())
                 ->icon('heroicon-o-user-minus')
-                ->color('purple'),
+                ->color('warning')
+                ->url(CasaResource::getUrl('index', ['tableFilters' => ['estado' => ['value' => 'no_asistio']]])),
+
+            Stat::make('Tickets abiertos', $ticketsAbiertos)
+                ->icon('heroicon-o-wrench-screwdriver')
+                ->color('danger'),
         ];
     }
 }

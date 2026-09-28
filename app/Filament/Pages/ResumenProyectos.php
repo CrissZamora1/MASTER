@@ -8,9 +8,13 @@ use Filament\Pages\Page;
 
 class ResumenProyectos extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-chart-pie';
+    protected static ?string $navigationGroup = 'Inventario';
 
-    protected static ?string $navigationLabel = 'Resumen por Proyecto';
+    protected static ?int $navigationSort = 4;
+
+    protected static ?string $navigationLabel = 'Resumen por proyecto';
+
+    protected static ?string $navigationIcon = 'heroicon-o-chart-pie';
 
     protected static string $view = 'filament.pages.resumen-proyectos';
 

@@ -15,6 +15,18 @@ class ReclamoGarantiaResource extends Resource
 {
     protected static ?string $model = ReclamoGarantia::class;
 
+    protected static ?string $navigationGroup = 'Gestión';
+
+    protected static ?int $navigationSort = 5;
+
+    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
+
+    protected static ?string $navigationLabel = 'Mis tickets';
+
+    protected static ?string $modelLabel = 'ticket';
+
+    protected static ?string $pluralModelLabel = 'tickets';
+
     public static function shouldRegisterNavigation(): bool
     {
         return auth()->user()?->esContratista() ?? false;

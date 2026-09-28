@@ -7,6 +7,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -29,6 +30,13 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandName('Gestión de Casas')
+            ->navigationGroups([
+                NavigationGroup::make('Gestión'),
+                NavigationGroup::make('Inventario'),
+                NavigationGroup::make('Personas'),
+                NavigationGroup::make('Configuración')->collapsed(),
+            ])
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -38,10 +46,6 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([
-                \App\Filament\Widgets\CasasStatsOverview::class,
-                \App\Filament\Widgets\CasasPorEstadoChart::class,
-            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

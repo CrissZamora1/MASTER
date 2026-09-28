@@ -7,6 +7,10 @@ use Filament\Pages\Page;
 
 class Calendario extends Page
 {
+    protected static ?string $navigationGroup = 'Gestión';
+
+    protected static ?int $navigationSort = 1;
+
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
 
     protected static string $view = 'filament.pages.calendario';

@@ -17,7 +17,17 @@ class ContratistaResource extends Resource
 {
     protected static ?string $model = Contratista::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Personas';
+
+    protected static ?int $navigationSort = 2;
+
+    protected static ?string $navigationIcon = 'heroicon-o-wrench-screwdriver';
+
+    protected static ?string $navigationLabel = 'Contratistas';
+
+    protected static ?string $modelLabel = 'contratista';
+
+    protected static ?string $pluralModelLabel = 'contratistas';
 
     public static function form(Form $form): Form
     {

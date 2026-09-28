@@ -17,7 +17,17 @@ class GarantiaResource extends Resource
 {
     protected static ?string $model = Garantia::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Configuración';
+
+    protected static ?int $navigationSort = 1;
+
+    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+
+    protected static ?string $navigationLabel = 'Garantías';
+
+    protected static ?string $modelLabel = 'garantía';
+
+    protected static ?string $pluralModelLabel = 'garantías';
 
     public static function form(Form $form): Form
     {

@@ -20,7 +20,17 @@ class ReclamoResource extends Resource
 {
     protected static ?string $model = Reclamo::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Gestión';
+
+    protected static ?int $navigationSort = 4;
+
+    protected static ?string $navigationIcon = 'heroicon-o-exclamation-triangle';
+
+    protected static ?string $navigationLabel = 'Reclamos';
+
+    protected static ?string $modelLabel = 'reclamo';
+
+    protected static ?string $pluralModelLabel = 'reclamos';
 
     public static function form(Form $form): Form
     {

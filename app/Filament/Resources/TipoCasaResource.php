@@ -17,7 +17,17 @@ class TipoCasaResource extends Resource
 {
     protected static ?string $model = TipoCasa::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Inventario';
+
+    protected static ?int $navigationSort = 2;
+
+    protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
+
+    protected static ?string $navigationLabel = 'Tipos de casa';
+
+    protected static ?string $modelLabel = 'tipo de casa';
+
+    protected static ?string $pluralModelLabel = 'tipos de casa';
 
    public static function form(Form $form): Form
 {

@@ -17,7 +17,17 @@ class EntregaResource extends Resource
 {
     protected static ?string $model = Entrega::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Gestión';
+
+    protected static ?int $navigationSort = 3;
+
+    protected static ?string $navigationIcon = 'heroicon-o-key';
+
+    protected static ?string $navigationLabel = 'Entregas';
+
+    protected static ?string $modelLabel = 'entrega';
+
+    protected static ?string $pluralModelLabel = 'entregas';
 
     public static function form(Form $form): Form
     {

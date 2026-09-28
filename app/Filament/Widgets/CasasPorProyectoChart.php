@@ -2,69 +2,74 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Casa;
 use App\Models\Proyecto;
 use Filament\Widgets\ChartWidget;
 
 class CasasPorProyectoChart extends ChartWidget
 {
-    protected static ?string $heading = 'Distribución de estados';
+    protected static ?string $heading = 'Avance por proyecto';
 
-    public ?string $filter = 'todos';
+    protected static ?int $sort = 2;
 
-    protected function getFilters(): ?array
+    protected int|string|array $columnSpan = 'full';
+
+    protected static ?string $maxHeight = '320px';
+
+    public static function canView(): bool
     {
-        return Proyecto::pluck('nombre', 'id')
-            ->prepend('Todos los proyectos', 'todos')
-            ->toArray();
-    }
-
-    public function updatedFilter(): void
-    {
-        $this->dispatch('proyecto-filtro-actualizado', proyectoId: $this->filter);
+        return ! auth()->user()?->esContratista();
     }
 
     protected function getData(): array
     {
-        $query = Casa::query();
+        $user = auth()->user();
 
-        if ($this->filter !== 'todos') {
-            $query->where('proyecto_id', $this->filter);
-        }
+        $proyectos = Proyecto::query()
+            ->with('casas')
+            ->when(
+                $user && ! $user->esSuper() && ! $user->esMaster(),
+                fn ($q) => $q->whereIn('id', $user->proyectosAsignados()->pluck('proyectos.id')),
+            )
+            ->get();
 
         $estados = [
             'disponible' => ['label' => 'Disponible', 'color' => '#22c55e'],
-            'no_disponible' => ['label' => 'No disponible', 'color' => '#ef4444'],
-            'programada' => ['label' => 'Programada', 'color' => '#f59e0b'],
-            'reprogramada' => ['label' => 'Reprogramada', 'color' => '#fb923c'],
-            'entregado' => ['label' => 'Entregado', 'color' => '#3b82f6'],
-            'no_asistio' => ['label' => 'No asistió', 'color' => '#a855f7'],
+            'no_disponible' => ['label' => 'No disponible', 'color' => '#d1d5db'],
+            'programada' => ['label' => 'Programada', 'color' => '#3b82f6'],
+            'reprogramada' => ['label' => 'Reprogramada', 'color' => '#a855f7'],
+            'entregado' => ['label' => 'Entregado', 'color' => '#0f766e'],
+            'entregado_con_reclamos' => ['label' => 'Entregado con reclamos', 'color' => '#f59e0b'],
+            'no_asistio' => ['label' => 'No asistió', 'color' => '#ef4444'],
         ];
 
-        $data = [];
-        $labels = [];
-        $colors = [];
+        $datasets = [];
 
         foreach ($estados as $clave => $info) {
-            $count = (clone $query)->where('estado', $clave)->count();
-            if ($count > 0) {
-                $data[] = $count;
-                $labels[] = $info['label'];
-                $colors[] = $info['color'];
-            }
+            $datasets[] = [
+                'label' => $info['label'],
+                'data' => $proyectos->map(fn ($p) => $p->casas->where('estado', $clave)->count())->toArray(),
+                'backgroundColor' => $info['color'],
+            ];
         }
 
         return [
-            'datasets' => [[
-                'data' => $data,
-                'backgroundColor' => $colors,
-            ]],
-            'labels' => $labels,
+            'datasets' => $datasets,
+            'labels' => $proyectos->pluck('nombre')->toArray(),
         ];
     }
 
     protected function getType(): string
     {
-        return 'doughnut';
+        return 'bar';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'scales' => [
+                'x' => ['stacked' => true],
+                'y' => ['stacked' => true, 'ticks' => ['precision' => 0]],
+            ],
+        ];
     }
 }

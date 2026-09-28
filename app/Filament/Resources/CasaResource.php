@@ -18,7 +18,17 @@ class CasaResource extends Resource
 {
     protected static ?string $model = Casa::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Inventario';
+
+    protected static ?int $navigationSort = 3;
+
+    protected static ?string $navigationIcon = 'heroicon-o-home-modern';
+
+    protected static ?string $navigationLabel = 'Casas';
+
+    protected static ?string $modelLabel = 'casa';
+
+    protected static ?string $pluralModelLabel = 'casas';
 
     public static function form(Form $form): Form
     {
